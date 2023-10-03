@@ -42,8 +42,10 @@ from perceval.backends.core.dockerhub import (DockerHub,
 from base import TestCaseBackendArchive
 
 DOCKERHUB_URL = "https://hub.docker.com/"
-DOCKERHUB_API_URL = DOCKERHUB_URL + 'v2'
-DOCKERHUB_RESPOSITORY_URL = DOCKERHUB_API_URL + '/repositories/grimoirelab/perceval'
+DOCKERHUB_API_URL = f'{DOCKERHUB_URL}v2'
+DOCKERHUB_RESPOSITORY_URL = (
+    f'{DOCKERHUB_API_URL}/repositories/grimoirelab/perceval'
+)
 
 
 def read_file(filename, mode='r'):
@@ -122,7 +124,7 @@ class TestDockerHubBackend(unittest.TestCase):
         setup_http_server()
 
         dockerhub = DockerHub('grimoirelab', 'perceval')
-        items = [item for item in dockerhub.fetch()]
+        items = list(dockerhub.fetch())
 
         self.assertEqual(len(items), 1)
         item = items[0]
@@ -146,7 +148,7 @@ class TestDockerHubBackend(unittest.TestCase):
         setup_http_server()
 
         dockerhub = DockerHub('grimoirelab', 'perceval')
-        items = [item for item in dockerhub.fetch()]
+        items = list(dockerhub.fetch())
 
         self.assertEqual(len(items), 1)
         item = items[0]

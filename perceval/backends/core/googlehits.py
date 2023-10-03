@@ -93,9 +93,7 @@ class GoogleHits(Backend):
         :returns: a generator of data
         """
         kwargs = {}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch Google hit items
@@ -108,10 +106,7 @@ class GoogleHits(Backend):
         logger.info("Fetching data for '%s'", self.keywords)
 
         hits_raw = self.client.hits(self.keywords)
-        hits = self.__parse_hits(hits_raw)
-
-        yield hits
-
+        yield self.__parse_hits(hits_raw)
         logger.info("Fetch process completed")
 
     @classmethod
@@ -227,11 +222,7 @@ class GoogleHitsClient(HttpClient):
     def hits(self, keywords):
         """Fetch information about a list of keywords."""
 
-        if len(keywords) == 1:
-            query_str = keywords[0]
-        else:
-            query_str = ' '.join([k for k in keywords])
-
+        query_str = keywords[0] if len(keywords) == 1 else ' '.join(list(keywords))
         logger.info("Fetching hits for '%s'", query_str)
         params = {self.PQUERY: query_str}
 

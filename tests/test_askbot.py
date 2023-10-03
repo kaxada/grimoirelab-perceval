@@ -45,13 +45,13 @@ from perceval.utils import DEFAULT_DATETIME
 from base import TestCaseBackendArchive
 
 ASKBOT_URL = 'http://example.com'
-ASKBOT_QUESTIONS_API_URL = ASKBOT_URL + '/api/v1/questions'
-ASKBOT_QUESTION_2481_URL = ASKBOT_URL + '/question/2481'
-ASKBOT_QUESTION_2488_URL = ASKBOT_URL + '/question/2488'
-ASKBOT_QUESTION_24396_URL = ASKBOT_URL + '/question/24396'
-ASKBOT_QUESTION_EMPTY_URL = ASKBOT_URL + '/question/0'
-ASKBOT_COMMENTS_API_URL = ASKBOT_URL + '/s/post_comments'
-ASKBOT_COMMENTS_API_URL_OLD = ASKBOT_URL + '/post_comments'
+ASKBOT_QUESTIONS_API_URL = f'{ASKBOT_URL}/api/v1/questions'
+ASKBOT_QUESTION_2481_URL = f'{ASKBOT_URL}/question/2481'
+ASKBOT_QUESTION_2488_URL = f'{ASKBOT_URL}/question/2488'
+ASKBOT_QUESTION_24396_URL = f'{ASKBOT_URL}/question/24396'
+ASKBOT_QUESTION_EMPTY_URL = f'{ASKBOT_URL}/question/0'
+ASKBOT_COMMENTS_API_URL = f'{ASKBOT_URL}/s/post_comments'
+ASKBOT_COMMENTS_API_URL_OLD = f'{ASKBOT_URL}/post_comments'
 
 
 def read_file(filename, mode='r'):
@@ -450,7 +450,7 @@ class TestAskbotBackend(unittest.TestCase):
                                body=comments, status=200)
 
         backend = Askbot(ASKBOT_URL)
-        questions = [question for question in backend.fetch()]
+        questions = list(backend.fetch())
 
         self.assertEqual(len(questions), 1)
 
@@ -490,7 +490,7 @@ class TestAskbotBackend(unittest.TestCase):
 
         backend = Askbot(ASKBOT_URL)
 
-        questions = [question for question in backend.fetch()]
+        questions = list(backend.fetch())
 
         json_comments = json.loads(comments)
 
@@ -547,7 +547,7 @@ class TestAskbotBackend(unittest.TestCase):
 
         backend = Askbot(ASKBOT_URL)
 
-        questions = [question for question in backend.fetch()]
+        questions = list(backend.fetch())
 
         question = questions[0]
         self.assertEqual(backend.metadata_id(question['data']), question['search_fields']['item_id'])
@@ -597,7 +597,7 @@ class TestAskbotBackend(unittest.TestCase):
 
         from_date = datetime.datetime(2013, 1, 1)
 
-        questions = [question for question in backend.fetch(from_date=from_date)]
+        questions = list(backend.fetch(from_date=from_date))
 
         self.assertEqual(questions[0]['tag'], 'http://example.com')
         self.assertEqual(questions[0]['uuid'], '3fb5f945a0dd223c60218a98ad35bad6043f9f5f')

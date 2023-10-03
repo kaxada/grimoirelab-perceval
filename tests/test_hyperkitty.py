@@ -42,8 +42,8 @@ from perceval.backends.core.hyperkitty import (HyperKitty,
 
 
 HYPERKITTY_URL = 'http://example.com/archives/list/test@example.com/'
-HYPERKITTY_MARCH_MBOX_URL = HYPERKITTY_URL + '/export/2016-03.mbox.gz'
-HYPERKITTY_APRIL_MBOX_URL = HYPERKITTY_URL + '/export/2016-04.mbox.gz'
+HYPERKITTY_MARCH_MBOX_URL = f'{HYPERKITTY_URL}/export/2016-03.mbox.gz'
+HYPERKITTY_APRIL_MBOX_URL = f'{HYPERKITTY_URL}/export/2016-04.mbox.gz'
 
 
 def read_file(filename, mode='r'):
@@ -85,12 +85,16 @@ class TestHyperKittyList(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                HYPERKITTY_URL,
                                body="")
-        httpretty.register_uri(httpretty.GET,
-                               HYPERKITTY_URL + 'export/2016-03.mbox.gz',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               HYPERKITTY_URL + 'export/2016-04.mbox.gz',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{HYPERKITTY_URL}export/2016-03.mbox.gz',
+            body=mbox_march,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{HYPERKITTY_URL}export/2016-04.mbox.gz',
+            body=mbox_april,
+        )
 
         from_date = datetime.datetime(2016, 3, 10)
 
@@ -100,9 +104,9 @@ class TestHyperKittyList(unittest.TestCase):
 
         self.assertEqual(len(fetched), 2)
 
-        self.assertEqual(fetched[0][0], HYPERKITTY_URL + 'export/2016-03.mbox.gz')
+        self.assertEqual(fetched[0][0], f'{HYPERKITTY_URL}export/2016-03.mbox.gz')
         self.assertEqual(fetched[0][1], os.path.join(self.tmp_path, '2016-03.mbox.gz'))
-        self.assertEqual(fetched[1][0], HYPERKITTY_URL + 'export/2016-04.mbox.gz')
+        self.assertEqual(fetched[1][0], f'{HYPERKITTY_URL}export/2016-04.mbox.gz')
         self.assertEqual(fetched[1][1], os.path.join(self.tmp_path, '2016-04.mbox.gz'))
 
         mboxes = hkls.mboxes
@@ -202,18 +206,22 @@ class TestHyperKittyBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                HYPERKITTY_URL,
                                body="")
-        httpretty.register_uri(httpretty.GET,
-                               HYPERKITTY_URL + 'export/2016-03.mbox.gz',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               HYPERKITTY_URL + 'export/2016-04.mbox.gz',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{HYPERKITTY_URL}export/2016-03.mbox.gz',
+            body=mbox_march,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{HYPERKITTY_URL}export/2016-04.mbox.gz',
+            body=mbox_april,
+        )
 
         from_date = datetime.datetime(2016, 3, 10)
 
         backend = HyperKitty('http://example.com/archives/list/test@example.com/',
                              self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
 
         # Although there is a message in the mbox from March, this message
         # was sent previous to the given date, so it is not included
@@ -250,18 +258,22 @@ class TestHyperKittyBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                HYPERKITTY_URL,
                                body="")
-        httpretty.register_uri(httpretty.GET,
-                               HYPERKITTY_URL + 'export/2016-03.mbox.gz',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               HYPERKITTY_URL + 'export/2016-04.mbox.gz',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{HYPERKITTY_URL}export/2016-03.mbox.gz',
+            body=mbox_march,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{HYPERKITTY_URL}export/2016-04.mbox.gz',
+            body=mbox_april,
+        )
 
         from_date = datetime.datetime(2016, 3, 10)
 
         backend = HyperKitty('http://example.com/archives/list/test@example.com/',
                              self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
 
         for message in messages:
             self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
@@ -282,7 +294,7 @@ class TestHyperKittyBackend(unittest.TestCase):
 
         backend = HyperKitty('http://example.com/archives/list/test@example.com/',
                              self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
 
         self.assertEqual(len(messages), 0)
 

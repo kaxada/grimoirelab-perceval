@@ -73,9 +73,7 @@ class RSS(Backend):
         :returns: a generator of entries
         """
         kwargs = {}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the entries
@@ -98,7 +96,7 @@ class RSS(Backend):
         logger.info("Total number of entries: %i", nentries)
 
     @classmethod
-    def parse_feed(self, raw_entries):
+    def parse_feed(cls, raw_entries):
         return feedparser.parse(raw_entries)
 
     @classmethod

@@ -106,9 +106,7 @@ class Telegram(Backend):
             offset = DEFAULT_OFFSET
 
         kwargs = {"offset": offset, "chats": chats}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
@@ -135,9 +133,9 @@ class Telegram(Backend):
 
         while True:
             raw_json = self.client.updates(offset=offset)
-            messages = [msg for msg in self.parse_messages(raw_json)]
+            messages = list(self.parse_messages(raw_json))
 
-            if len(messages) == 0:
+            if not messages:
                 break
 
             for msg in messages:
@@ -207,9 +205,7 @@ class Telegram(Backend):
         :returns: a UNIX timestamp
         """
         ts = item['message']['date']
-        ts = float(ts)
-
-        return ts
+        return float(ts)
 
     @staticmethod
     def metadata_category(item):
@@ -263,12 +259,7 @@ class Telegram(Backend):
         :returns: `True` when the message can be filtered; otherwise,
             it returns `False`
         """
-        if chats is None:
-            return True
-
-        chat_id = message['message']['chat']['id']
-
-        return chat_id in chats
+        return True if chats is None else message['message']['chat']['id'] in chats
 
 
 class TelegramCommand(BackendCommand):
@@ -343,9 +334,7 @@ class TelegramBotClient(HttpClient):
         if offset:
             params[self.OFFSET] = offset
 
-        response = self._call(self.UPDATES_METHOD, params)
-
-        return response
+        return self._call(self.UPDATES_METHOD, params)
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):

@@ -65,7 +65,7 @@ class NNTP(Backend):
     }
 
     def __init__(self, host, group, tag=None, archive=None):
-        origin = host + '-' + group
+        origin = f'{host}-{group}'
 
         super().__init__(origin, tag=tag, archive=archive)
         self.host = host
@@ -87,9 +87,7 @@ class NNTP(Backend):
             offset = DEFAULT_OFFSET
 
         kwargs = {'offset': offset}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the articles
@@ -192,8 +190,9 @@ class NNTP(Backend):
             ts = str_to_datetime(ts)
         except InvalidDateError as e:
             # Set to the FALLBACK_DATE when it is not a valid date
-            logger.warning("%s from Message-ID: %s. Set the fallback date: %s" %
-                           (e, item['Message-ID'], FALLBACK_DATE))
+            logger.warning(
+                f"{e} from Message-ID: {item['Message-ID']}. Set the fallback date: {FALLBACK_DATE}"
+            )
             ts = str_to_datetime(FALLBACK_DATE)
 
         return ts.timestamp()
@@ -247,7 +246,7 @@ class NNTP(Backend):
         return article
 
     def __build_article(self, article, message_id, offset):
-        a = {k: v for k, v in article.items()}
+        a = dict(article.items())
         a['message_id'] = message_id
         a['offset'] = offset
         return a
@@ -305,12 +304,11 @@ class NNTTPClient():
         :param method: the name of the command to execute
         :param args: the arguments required by the command
         """
-        if self.from_archive:
-            data = self._fetch_from_archive(method, args)
-        else:
-            data = self._fetch_from_remote(method, args)
-
-        return data
+        return (
+            self._fetch_from_archive(method, args)
+            if self.from_archive
+            else self._fetch_from_remote(method, args)
+        )
 
     def _fetch_article(self, article_id):
         """Fetch article data
@@ -318,13 +316,11 @@ class NNTTPClient():
         :param article_id: id of the article to fetch
         """
         fetched_data = self.handler.article(article_id)
-        data = {
+        return {
             'number': fetched_data[1].number,
             'message_id': fetched_data[1].message_id,
-            'lines': fetched_data[1].lines
+            'lines': fetched_data[1].lines,
         }
-
-        return data
 
     def _fetch_from_remote(self, method, args):
         """Fetch data from NNTP

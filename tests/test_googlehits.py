@@ -133,7 +133,7 @@ class TestGoogleHitsBackend(unittest.TestCase):
         setup_http_server()
 
         backend = GoogleHits(['bitergia'])
-        items = [item for item in backend.fetch()]
+        items = list(backend.fetch())
 
         self.assertEqual(len(items), 1)
         item = items[0]
@@ -147,7 +147,7 @@ class TestGoogleHitsBackend(unittest.TestCase):
         self.assertEqual(item['tag'], 'https://www.google.com/search')
 
         backend = GoogleHits(['bitergia', 'grimoirelab'])
-        items = [item for item in backend.fetch()]
+        items = list(backend.fetch())
 
         self.assertEqual(len(items), 1)
         item = items[0]
@@ -171,7 +171,7 @@ class TestGoogleHitsBackend(unittest.TestCase):
         setup_http_server()
 
         backend = GoogleHits(['bitergia'])
-        items = [item for item in backend.fetch()]
+        items = list(backend.fetch())
 
         item = items[0]
         self.assertEqual(backend.metadata_id(item['data']), item['search_fields']['item_id'])
@@ -190,7 +190,7 @@ class TestGoogleHitsBackend(unittest.TestCase):
         backend = GoogleHits(['bitergia'])
 
         with self.assertLogs() as cm:
-            items = [item for item in backend.fetch()]
+            items = list(backend.fetch())
             self.assertEqual(cm.output[-2], "WARNING:perceval.backends.core.googlehits:No hits for ['bitergia']")
 
         self.assertEqual(len(items), 1)
@@ -276,7 +276,7 @@ class TestGoogleHitsClient(unittest.TestCase):
         client = GoogleHitsClient(max_retries=1, sleep_time=0.1)
 
         with self.assertRaises(requests.exceptions.RetryError):
-            _ = [hit for hit in client.hits(['bitergia'])]
+            _ = list(client.hits(['bitergia']))
 
 
 class TestGoogleHitsCommand(unittest.TestCase):

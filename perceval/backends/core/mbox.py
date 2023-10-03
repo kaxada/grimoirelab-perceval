@@ -95,9 +95,7 @@ class MBox(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
@@ -114,11 +112,7 @@ class MBox(Backend):
 
         mailing_list = MailingList(self.uri, self.dirpath)
 
-        messages = self._fetch_and_parse_messages(mailing_list, from_date)
-
-        for message in messages:
-            yield message
-
+        yield from self._fetch_and_parse_messages(mailing_list, from_date)
         logger.info("Fetch process completed")
 
     @classmethod
@@ -184,8 +178,7 @@ class MBox(Backend):
         mbox = _MBox(filepath, create=False)
 
         for msg in mbox:
-            message = message_to_dict(msg)
-            yield message
+            yield message_to_dict(msg)
 
     def _init_client(self, from_archive=False):
         pass
@@ -294,7 +287,7 @@ class MBox(Backend):
         message_id = message.pop(self.MESSAGE_ID_FIELD)
         date = message.pop(self.DATE_FIELD)
 
-        msg = {k: v for k, v in message.items()}
+        msg = dict(message.items())
         msg[self.MESSAGE_ID_FIELD] = message_id
         msg[self.DATE_FIELD] = date
 

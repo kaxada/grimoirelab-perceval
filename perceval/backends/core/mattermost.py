@@ -92,11 +92,7 @@ class Mattermost(Backend):
                  sleep_for_rate=False, min_rate_to_sleep=MIN_RATE_LIMIT,
                  sleep_time=DEFAULT_SLEEP_TIME, ssl_verify=True):
 
-        if team is not None:
-            origin = urijoin(url, team, channel)
-        else:
-            origin = urijoin(url, channel)
-
+        origin = urijoin(url, channel) if team is None else urijoin(url, team, channel)
         super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
         self.url = url
         self.team = team
@@ -127,9 +123,7 @@ class Mattermost(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages.
@@ -229,9 +223,7 @@ class Mattermost(Backend):
 
         :returns: a UNIX timestamp
         """
-        ts = float(item['update_at'] / 1000.0)
-
-        return ts
+        return float(item['update_at'] / 1000.0)
 
     @staticmethod
     def metadata_category(item):
@@ -253,8 +245,7 @@ class Mattermost(Backend):
 
         :returns: a dict with the parsed data
         """
-        result = json.loads(raw_json)
-        return result
+        return json.loads(raw_json)
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -280,8 +271,7 @@ class Mattermost(Backend):
     def _parse_images(self, images):
         """Parse images and returns a list of images."""
 
-        list_images = [{**images[i], **{'url': i}} for i in images]
-        return list_images
+        return [{**images[i], **{'url': i}} for i in images]
 
     def _get_or_fetch_user(self, user_id):
         if user_id in self._users:
@@ -347,15 +337,13 @@ class MattermostClient(HttpClient, RateLimitHandler):
     def channel(self, channel):
         """Fetch the channel information"""
 
-        entrypoint = self.RCHANNELS + '/' + channel
+        entrypoint = f'{self.RCHANNELS}/{channel}'
 
         params = {
             self.PCHANNEL_ID: channel
         }
 
-        response = self._fetch(entrypoint, params)
-
-        return response
+        return self._fetch(entrypoint, params)
 
     def channel_by_name(self, team: str, channel: str):
         """Fetch the channel information by channel/team name
@@ -369,14 +357,12 @@ class MattermostClient(HttpClient, RateLimitHandler):
 
         params = {}
 
-        response = self._fetch(entrypoint, params)
-
-        return response
+        return self._fetch(entrypoint, params)
 
     def posts(self, channel, page=None):
         """Fetch the history of a channel."""
 
-        entrypoint = self.RCHANNELS + '/' + channel + '/' + self.RPOSTS
+        entrypoint = f'{self.RCHANNELS}/{channel}/{self.RPOSTS}'
 
         params = {
             self.PPER_PAGE: self.max_items
@@ -385,17 +371,13 @@ class MattermostClient(HttpClient, RateLimitHandler):
         if page is not None:
             params[self.PPAGE] = page
 
-        response = self._fetch(entrypoint, params)
-
-        return response
+        return self._fetch(entrypoint, params)
 
     def user(self, user):
         """Fetch user data."""
 
-        entrypoint = self.RUSERS + '/' + user
-        response = self._fetch(entrypoint, None)
-
-        return response
+        entrypoint = f'{self.RUSERS}/{user}'
+        return self._fetch(entrypoint, None)
 
     def fetch(self, url, payload=None, headers=None, method=HttpClient.GET, stream=False, auth=None):
         """Override fetch method to handle API rate limit.
@@ -428,9 +410,7 @@ class MattermostClient(HttpClient, RateLimitHandler):
         current_epoch = datetime_utcnow().replace(microsecond=0).timestamp() + 1
         time_to_reset = self.rate_limit_reset_ts - current_epoch
 
-        if time_to_reset < 0:
-            time_to_reset = 0
-
+        time_to_reset = max(time_to_reset, 0)
         return time_to_reset
 
     def _fetch(self, entry_point, params):
@@ -452,10 +432,7 @@ class MattermostClient(HttpClient, RateLimitHandler):
     def _set_extra_headers(self):
         """Set authentication tokens."""
 
-        headers = {
-            self.HAUTHORIZATION: 'Bearer ' + self.api_token
-        }
-        return headers
+        return {self.HAUTHORIZATION: f'Bearer {self.api_token}'}
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):

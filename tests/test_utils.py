@@ -121,7 +121,7 @@ class TestMonthsRange(unittest.TestCase):
              datetime.datetime(2017, 3, 1))
         ]
 
-        result = [r for r in months_range(from_date, to_date)]
+        result = list(months_range(from_date, to_date))
         self.assertListEqual(result, expected)
 
     def test_range_outbounds(self):
@@ -130,7 +130,7 @@ class TestMonthsRange(unittest.TestCase):
         from_date = datetime.datetime(2017, 3, 30)
         to_date = datetime.datetime(2016, 11, 10)
 
-        result = [r for r in months_range(from_date, to_date)]
+        result = list(months_range(from_date, to_date))
         self.assertListEqual(result, [])
 
     def test_range_same_month(self):
@@ -139,7 +139,7 @@ class TestMonthsRange(unittest.TestCase):
         from_date = datetime.datetime(2016, 11, 10)
         to_date = datetime.datetime(2016, 11, 30)
 
-        result = [r for r in months_range(from_date, to_date)]
+        result = list(months_range(from_date, to_date))
         self.assertListEqual(result, [])
 
 
@@ -153,7 +153,7 @@ class TestMessagetoDict(unittest.TestCase):
         msg = email.message_from_string(raw_email)
 
         message = message_to_dict(msg)
-        message = {k: v for k, v in message.items()}
+        message = dict(message.items())
 
         expected = {
             'From': 'goran at domain.com ( Göran Lastname )',

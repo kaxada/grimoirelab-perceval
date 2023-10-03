@@ -98,9 +98,7 @@ class Redmine(Backend):
 
         from_date = datetime_to_utc(from_date)
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the issues
@@ -125,7 +123,7 @@ class Redmine(Backend):
                     continue
 
                 user = self.__get_or_fetch_user(issue[key]['id'])
-                issue[key + '_data'] = user
+                issue[f'{key}_data'] = user
 
             for journal in issue['journals']:
                 if 'user' not in journal:
@@ -199,9 +197,7 @@ class Redmine(Backend):
         """
         results = json.loads(raw_json)
 
-        issues = results['issues']
-        for issue in issues:
-            yield issue
+        yield from results['issues']
 
     @staticmethod
     def parse_issue_data(raw_json):
@@ -243,9 +239,7 @@ class Redmine(Backend):
 
         while issues:
             issue = issues.pop(0)
-            issue_id = issue['id']
-            yield issue_id
-
+            yield issue['id']
             if not issues:
                 offset += self.max_issues
                 issues = self.__fetch_and_parse_issues_page(from_date, offset,
@@ -260,13 +254,12 @@ class Redmine(Backend):
         try:
             user = self.__fetch_and_parse_user(user_id)
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                logger.warning("User %s not found on the server; skipping it",
-                               user_id)
-                user = {}
-            else:
+            if e.response.status_code != 404:
                 raise e
 
+            logger.warning("User %s not found on the server; skipping it",
+                           user_id)
+            user = {}
         self._users[user_id] = user
 
         return user
@@ -277,7 +270,7 @@ class Redmine(Backend):
         raw_json = self.client.issues(from_date=from_date, offset=offset,
                                       max_issues=max_issues)
         issues = self.parse_issues(raw_json)
-        return [issue for issue in issues]
+        return list(issues)
 
     def __fetch_and_parse_issue(self, issue_id):
         logger.debug("Fetching and parsing issue #%s", issue_id)
@@ -376,16 +369,14 @@ class RedmineClient(HttpClient):
         params = {
             self.PSTATUS_ID: '*',
             self.PSORT: self.PUPDATED_ON,
-            self.PUPDATED_ON: '>=' + ts,
-            self.PLIMIT: max_issues
+            self.PUPDATED_ON: f'>={ts}',
+            self.PLIMIT: max_issues,
         }
 
         if offset is not None:
             params[self.POFFSET] = offset
 
-        response = self._call(resource, params)
-
-        return response
+        return self._call(resource, params)
 
     def issue(self, issue_id):
         """Get the information of the given issue.
@@ -400,9 +391,7 @@ class RedmineClient(HttpClient):
                                      self.CRELATIONS, self.CWATCHERS])
         }
 
-        response = self._call(resource, params)
-
-        return response
+        return self._call(resource, params)
 
     def user(self, user_id):
         """Get the information of the given user.
@@ -413,9 +402,7 @@ class RedmineClient(HttpClient):
 
         params = {}
 
-        response = self._call(resource, params)
-
-        return response
+        return self._call(resource, params)
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):

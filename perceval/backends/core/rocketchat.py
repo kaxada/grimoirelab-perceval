@@ -104,9 +104,7 @@ class RocketChat(Backend):
 
         kwargs = {'from_date': from_date}
 
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages.
@@ -206,8 +204,7 @@ class RocketChat(Backend):
 
         :returns: extracted timestamp
         """
-        ts = str_to_datetime(item['_updatedAt']).timestamp()
-        return ts
+        return str_to_datetime(item['_updatedAt']).timestamp()
 
     @staticmethod
     def metadata_category(item):
@@ -272,10 +269,7 @@ class RocketChatClient(HttpClient, RateLimitHandler):
         time_to_reset = self.rate_limit_reset_ts - (datetime_utcnow().replace(microsecond=0).timestamp() + 1) * 1000
         time_to_reset /= 1000
 
-        if time_to_reset < 0:
-            time_to_reset = 0
-
-        return time_to_reset
+        return max(time_to_reset, 0)
 
     def channel_info(self, channel):
         """Fetch information about a channel."""
@@ -285,9 +279,7 @@ class RocketChatClient(HttpClient, RateLimitHandler):
         }
 
         path = urijoin(self.base_url, self.RCHANNEL_INFO)
-        response = self.fetch(path, params)
-
-        return response
+        return self.fetch(path, params)
 
     def messages(self, channel, from_date, offset):
         """Fetch messages from a channel.
@@ -309,9 +301,7 @@ class RocketChatClient(HttpClient, RateLimitHandler):
         }
 
         path = urijoin(self.base_url, self.RCHANNEL_MESSAGES)
-        response = self.fetch(path, params)
-
-        return response
+        return self.fetch(path, params)
 
     def fetch(self, url, payload=None, headers=None):
         """Fetch the data from a given URL.

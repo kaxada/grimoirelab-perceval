@@ -40,12 +40,12 @@ from base import TestCaseBackendArchive
 
 
 MATTERMOST_API_URL = 'https://mattermost.example.com/api/v4'
-MATTERMOST_CHANNEL_INFO = MATTERMOST_API_URL + '/channels/abcdefghijkl'
-MATTERMOST_CHANNEL_NAME_INFO = MATTERMOST_API_URL + '/teams/name/my_team_name/channels/name/my_channel_name'
-MATTERMOST_CHANNEL_POSTS = MATTERMOST_API_URL + '/channels/abcdefghijkl/posts'
-MATTERMOST_USERS = MATTERMOST_API_URL + '/users'
-MATTERMOST_USER_SDUENAS = MATTERMOST_USERS + '/8tbwn7uikpdy3gpse6fgiie5co'
-MATTERMOST_USER_VALCOS = MATTERMOST_USERS + '/haqnaxe4cpn4jfsx3w7x3y96ea'
+MATTERMOST_CHANNEL_INFO = f'{MATTERMOST_API_URL}/channels/abcdefghijkl'
+MATTERMOST_CHANNEL_NAME_INFO = f'{MATTERMOST_API_URL}/teams/name/my_team_name/channels/name/my_channel_name'
+MATTERMOST_CHANNEL_POSTS = f'{MATTERMOST_API_URL}/channels/abcdefghijkl/posts'
+MATTERMOST_USERS = f'{MATTERMOST_API_URL}/users'
+MATTERMOST_USER_SDUENAS = f'{MATTERMOST_USERS}/8tbwn7uikpdy3gpse6fgiie5co'
+MATTERMOST_USER_VALCOS = f'{MATTERMOST_USERS}/haqnaxe4cpn4jfsx3w7x3y96ea'
 
 
 def read_file(filename, mode='r'):
@@ -81,10 +81,7 @@ def setup_http_server():
         elif uri.startswith(MATTERMOST_USER_VALCOS):
             body = user_valcos
         elif uri.startswith(MATTERMOST_CHANNEL_POSTS):
-            if 'page' not in params:
-                page = 0
-            else:
-                page = int(params['page'][0])
+            page = 0 if 'page' not in params else int(params['page'][0])
             body = full_response[page]
         elif uri.startswith(MATTERMOST_CHANNEL_INFO) or uri.startswith(MATTERMOST_CHANNEL_NAME_INFO):
             body = channel_info
@@ -176,7 +173,7 @@ class TestMattermostBackend(unittest.TestCase):
 
         mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',
                                 max_items=5)
-        posts = [post for post in mattermost.fetch(from_date=None)]
+        posts = list(mattermost.fetch(from_date=None))
 
         expected = [
             ('59io5i1f5bbetxtj6mbm67fouw', 'd023596f93fcd7e18838bd0adddae4e213d0ca15', 1523546846.639, 'sduenas'),
@@ -260,7 +257,7 @@ class TestMattermostBackend(unittest.TestCase):
         mattermost = Mattermost('https://mattermost.example.com/', 'my_channel_name', 'aaaa',
                                 max_items=5, team='my_team_name')
 
-        posts = [post for post in mattermost.fetch(from_date=None)]
+        posts = list(mattermost.fetch(from_date=None))
 
         expected = [
             ('59io5i1f5bbetxtj6mbm67fouw', '7d6cfbe12f4efdb99665ee12795e144937a4e0d5', 1523546846.639, 'sduenas'),
@@ -345,7 +342,7 @@ class TestMattermostBackend(unittest.TestCase):
 
         mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',
                                 max_items=5)
-        posts = [post for post in mattermost.fetch()]
+        posts = list(mattermost.fetch())
 
         post = posts[0]
         self.assertEqual(mattermost.metadata_id(post['data']), post['search_fields']['item_id'])
@@ -378,7 +375,7 @@ class TestMattermostBackend(unittest.TestCase):
 
         mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',
                                 max_items=5)
-        posts = [post for post in mattermost.fetch(from_date=from_date)]
+        posts = list(mattermost.fetch(from_date=from_date))
 
         expected = [
             ('59io5i1f5bbetxtj6mbm67fouw', 'd023596f93fcd7e18838bd0adddae4e213d0ca15', 1523546846.639, 'sduenas'),
@@ -437,7 +434,7 @@ class TestMattermostBackend(unittest.TestCase):
 
         mattermost = Mattermost('https://mattermost.example.com/', 'abcdefghijkl', 'aaaa',
                                 max_items=5)
-        posts = [post for post in mattermost.fetch(from_date=from_date)]
+        posts = list(mattermost.fetch(from_date=from_date))
 
         self.assertEqual(len(posts), 0)
 

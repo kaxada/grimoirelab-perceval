@@ -39,16 +39,16 @@ from base import TestCaseBackendArchive
 
 
 REDMINE_URL = 'http://example.com'
-REDMINE_ISSUES_URL = REDMINE_URL + '/issues.json'
-REDMINE_ISSUE_2_URL = REDMINE_URL + '/issues/2.json'
-REDMINE_ISSUE_5_URL = REDMINE_URL + '/issues/5.json'
-REDMINE_ISSUE_9_URL = REDMINE_URL + '/issues/9.json'
-REDMINE_ISSUE_7311_URL = REDMINE_URL + '/issues/7311.json'
-REDMINE_USER_3_URL = REDMINE_URL + '/users/3.json'
-REDMINE_USER_4_URL = REDMINE_URL + '/users/4.json'
-REDMINE_USER_24_URL = REDMINE_URL + '/users/24.json'
-REDMINE_USER_25_URL = REDMINE_URL + '/users/25.json'
-REDMINE_NOT_FOUND_USER_URL = REDMINE_URL + '/users/99.json'
+REDMINE_ISSUES_URL = f'{REDMINE_URL}/issues.json'
+REDMINE_ISSUE_2_URL = f'{REDMINE_URL}/issues/2.json'
+REDMINE_ISSUE_5_URL = f'{REDMINE_URL}/issues/5.json'
+REDMINE_ISSUE_9_URL = f'{REDMINE_URL}/issues/9.json'
+REDMINE_ISSUE_7311_URL = f'{REDMINE_URL}/issues/7311.json'
+REDMINE_USER_3_URL = f'{REDMINE_URL}/users/3.json'
+REDMINE_USER_4_URL = f'{REDMINE_URL}/users/4.json'
+REDMINE_USER_24_URL = f'{REDMINE_URL}/users/24.json'
+REDMINE_USER_25_URL = f'{REDMINE_URL}/users/25.json'
+REDMINE_NOT_FOUND_USER_URL = f'{REDMINE_URL}/users/99.json'
 
 REDMINE_URL_LIST = [
     REDMINE_ISSUES_URL, REDMINE_ISSUE_2_URL, REDMINE_ISSUE_5_URL,
@@ -181,7 +181,7 @@ class TestRedmineBackend(unittest.TestCase):
 
         redmine = Redmine(REDMINE_URL, api_token='AAAA',
                           max_issues=3)
-        issues = [issue for issue in redmine.fetch()]
+        issues = list(redmine.fetch())
 
         expected = [(9, '91a8349c2f6ebffcccc49409529c61cfd3825563', 1323367020.0, 3, 3),
                     (5, 'c4aeb9e77fec8e4679caa23d4012e7cc36ae8b98', 1323367075.0, 3, 3),
@@ -274,7 +274,7 @@ class TestRedmineBackend(unittest.TestCase):
 
         redmine = Redmine(REDMINE_URL, api_token='AAAA',
                           max_issues=3)
-        issues = [issue for issue in redmine.fetch()]
+        issues = list(redmine.fetch())
 
         issue = issues[0]
         self.assertEqual(redmine.metadata_id(issue['data']), issue['search_fields']['item_id'])
@@ -314,7 +314,7 @@ class TestRedmineBackend(unittest.TestCase):
 
         redmine = Redmine(REDMINE_URL, api_token='AAAA',
                           max_issues=3)
-        issues = [issue for issue in redmine.fetch(from_date=from_date)]
+        issues = list(redmine.fetch(from_date=from_date))
 
         self.assertEqual(len(issues), 1)
 
@@ -378,7 +378,7 @@ class TestRedmineBackend(unittest.TestCase):
 
         redmine = Redmine(REDMINE_URL, api_token='AAAA',
                           max_issues=3)
-        issues = [issue for issue in redmine.fetch(from_date=from_date)]
+        issues = list(redmine.fetch(from_date=from_date))
 
         self.assertEqual(len(issues), 1)
 
@@ -396,7 +396,7 @@ class TestRedmineBackend(unittest.TestCase):
 
         redmine = Redmine(REDMINE_URL, api_token='AAAA',
                           max_issues=3)
-        issues = [issue for issue in redmine.fetch(from_date=from_date)]
+        issues = list(redmine.fetch(from_date=from_date))
 
         self.assertEqual(len(issues), 0)
 
@@ -418,7 +418,7 @@ class TestRedmineBackend(unittest.TestCase):
         raw_json = read_file('data/redmine/redmine_issues.json')
 
         issues = Redmine.parse_issues(raw_json)
-        results = [issue for issue in issues]
+        results = list(issues)
 
         self.assertEqual(len(results), 3)
         self.assertEqual(results[0]['id'], 9)
@@ -429,7 +429,7 @@ class TestRedmineBackend(unittest.TestCase):
         raw_json = read_file('data/redmine/redmine_issues_empty.json')
 
         issues = Redmine.parse_issues(raw_json)
-        results = [issue for issue in issues]
+        results = list(issues)
 
         self.assertEqual(len(results), 0)
 

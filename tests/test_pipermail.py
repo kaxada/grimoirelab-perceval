@@ -98,26 +98,26 @@ class TestPipermailList(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2015-November.txt.gz',
-                               body=mbox_nov)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-March.txt',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-April.txt',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2015-November.txt.gz', body=mbox_nov
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-March.txt', body=mbox_march
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-April.txt', body=mbox_april
+        )
 
         pmls = PipermailList('http://example.com/', self.tmp_path)
         links = pmls.fetch()
 
         self.assertEqual(len(links), 3)
 
-        self.assertEqual(links[0][0], PIPERMAIL_URL + '2016-April.txt')
+        self.assertEqual(links[0][0], f'{PIPERMAIL_URL}2016-April.txt')
         self.assertEqual(links[0][1], os.path.join(self.tmp_path, '2016-April.txt'))
-        self.assertEqual(links[1][0], PIPERMAIL_URL + '2016-March.txt')
+        self.assertEqual(links[1][0], f'{PIPERMAIL_URL}2016-March.txt')
         self.assertEqual(links[1][1], os.path.join(self.tmp_path, '2016-March.txt'))
-        self.assertEqual(links[2][0], PIPERMAIL_URL + '2015-November.txt.gz')
+        self.assertEqual(links[2][0], f'{PIPERMAIL_URL}2015-November.txt.gz')
         self.assertEqual(links[2][1], os.path.join(self.tmp_path, '2015-November.txt.gz'))
 
         mboxes = pmls.mboxes
@@ -137,16 +137,18 @@ class TestPipermailList(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2015-November.txt.gz',
-                               body=mbox_nov)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-March.txt',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-April.txt',
-                               body=mbox_april,
-                               status=403)
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2015-November.txt.gz', body=mbox_nov
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-March.txt', body=mbox_march
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{PIPERMAIL_URL}2016-April.txt',
+            body=mbox_april,
+            status=403,
+        )
 
         pmls = PipermailList('http://example.com/', self.tmp_path)
         links = pmls.fetch()
@@ -165,15 +167,15 @@ class TestPipermailList(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2015-November.txt.gz',
-                               body=mbox_nov)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-March.txt',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-April.txt',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2015-November.txt.gz', body=mbox_nov
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-March.txt', body=mbox_march
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-April.txt', body=mbox_april
+        )
 
         pmls = PipermailListMocked('http://example.com/', self.tmp_path)
         links = pmls.fetch()
@@ -190,10 +192,12 @@ class TestPipermailList(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-April.txt',
-                               body=mbox_april,
-                               status=404)
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{PIPERMAIL_URL}2016-April.txt',
+            body=mbox_april,
+            status=404,
+        )
 
         pmls = PipermailList('http://example.com/', self.tmp_path)
 
@@ -243,24 +247,24 @@ class TestPipermailList(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2015-November.txt.gz',
-                               body=mbox_nov)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-March.txt',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-April.txt',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2015-November.txt.gz', body=mbox_nov
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-March.txt', body=mbox_march
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-April.txt', body=mbox_april
+        )
 
         pmls = PipermailList('http://example.com/', self.tmp_path)
 
         links = pmls.fetch(from_date=datetime.datetime(2016, 3, 30))
 
         self.assertEqual(len(links), 2)
-        self.assertEqual(links[0][0], PIPERMAIL_URL + '2016-April.txt')
+        self.assertEqual(links[0][0], f'{PIPERMAIL_URL}2016-April.txt')
         self.assertEqual(links[0][1], os.path.join(self.tmp_path, '2016-April.txt'))
-        self.assertEqual(links[1][0], PIPERMAIL_URL + '2016-March.txt')
+        self.assertEqual(links[1][0], f'{PIPERMAIL_URL}2016-March.txt')
         self.assertEqual(links[1][1], os.path.join(self.tmp_path, '2016-March.txt'))
 
         mboxes = pmls.mboxes
@@ -347,18 +351,18 @@ class TestPipermailBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2015-November.txt.gz',
-                               body=mbox_nov)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-March.txt',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-April.txt',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2015-November.txt.gz', body=mbox_nov
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-March.txt', body=mbox_march
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-April.txt', body=mbox_april
+        )
 
         backend = Pipermail('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         expected = [('<CACRHdMaObu7Dc0FWTWEesvRCzUNDG=7oA7KFqAgtOs_UKjb3Og@mail.gmail.com>',
                      '9221eb7884be6f6b91fccd5d64107ce6c7f15e4d', 1447532968.0),
@@ -400,18 +404,18 @@ class TestPipermailBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '201511.mbox',
-                               body=mbox_nov)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '201603.mbox',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '201604.mbox',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}201511.mbox', body=mbox_nov
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}201603.mbox', body=mbox_march
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}201604.mbox', body=mbox_april
+        )
 
         backend = Pipermail('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         expected = [('<CACRHdMaObu7Dc0FWTWEesvRCzUNDG=7oA7KFqAgtOs_UKjb3Og@mail.gmail.com>',
                      '9221eb7884be6f6b91fccd5d64107ce6c7f15e4d', 1447532968.0),
@@ -453,20 +457,20 @@ class TestPipermailBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2015-November.txt.gz',
-                               body=mbox_nov)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-March.txt',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-April.txt',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2015-November.txt.gz', body=mbox_nov
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-March.txt', body=mbox_march
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-April.txt', body=mbox_april
+        )
 
         from_date = datetime.datetime(2016, 3, 4)
 
         backend = Pipermail('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
 
         # For this test, mboxes from March and April should be downloaded.
         expected_downloads = []
@@ -512,7 +516,7 @@ class TestPipermailBackend(unittest.TestCase):
                                body=pipermail_index)
 
         backend = Pipermail('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         self.assertListEqual(messages, [])
 
@@ -528,18 +532,18 @@ class TestPipermailBackend(unittest.TestCase):
         httpretty.register_uri(httpretty.GET,
                                PIPERMAIL_URL,
                                body=pipermail_index)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2015-November.txt.gz',
-                               body=mbox_nov)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-March.txt',
-                               body=mbox_march)
-        httpretty.register_uri(httpretty.GET,
-                               PIPERMAIL_URL + '2016-April.txt',
-                               body=mbox_april)
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2015-November.txt.gz', body=mbox_nov
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-March.txt', body=mbox_march
+        )
+        httpretty.register_uri(
+            httpretty.GET, f'{PIPERMAIL_URL}2016-April.txt', body=mbox_april
+        )
 
         backend = Pipermail('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         self.assertEqual(len(messages), 8)
 

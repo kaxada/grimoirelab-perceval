@@ -53,11 +53,7 @@ def configure_http_server():
     def request_callback(method, uri, headers):
         last_request = httpretty.last_request()
 
-        if uri.startswith(RSS_FEED_URL):
-            body = bodies_entries_job
-        else:
-            body = ''
-
+        body = bodies_entries_job if uri.startswith(RSS_FEED_URL) else ''
         requests_http.append(httpretty.last_request())
 
         http_requests.append(last_request)
@@ -119,7 +115,7 @@ class TestRSSBackend(unittest.TestCase):
 
         # Test fetch entries from feed
         rss = RSS(RSS_FEED_URL)
-        entries = [entry for entry in rss.fetch()]
+        entries = list(rss.fetch())
         self.assertEqual(len(entries), 30)
         self.assertEqual(len(http_requests), 1)
 
@@ -147,7 +143,7 @@ class TestRSSBackend(unittest.TestCase):
         configure_http_server()
 
         rss = RSS(RSS_FEED_URL)
-        entries = [entry for entry in rss.fetch()]
+        entries = list(rss.fetch())
 
         for entry in entries:
             self.assertEqual(rss.metadata_id(entry['data']), entry['search_fields']['item_id'])
@@ -166,7 +162,7 @@ class TestRSSBackend(unittest.TestCase):
                                body=body, status=200)
 
         rss = RSS(RSS_FEED_URL)
-        entries = [entry for entry in rss.fetch()]
+        entries = list(rss.fetch())
 
         self.assertEqual(len(entries), 0)
 

@@ -101,9 +101,7 @@ class BugzillaREST(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the bugs
@@ -234,20 +232,17 @@ class BugzillaREST(Backend):
     @staticmethod
     def __parse_comments(raw_comments):
         contents = json.loads(raw_comments)['bugs']
-        comments = {k: v['comments'] for k, v in contents.items()}
-        return comments
+        return {k: v['comments'] for k, v in contents.items()}
 
     @staticmethod
     def __parse_histories(raw_histories):
         contents = json.loads(raw_histories)['bugs']
-        history = {str(c['id']): c['history'] for c in contents}
-        return history
+        return {str(c['id']): c['history'] for c in contents}
 
     @staticmethod
     def __parse_attachments(raw_attachments):
         contents = json.loads(raw_attachments)['bugs']
-        attachments = {k: v for k, v in contents.items()}
-        return attachments
+        return dict(contents.items())
 
 
 class BugzillaRESTError(BaseError):
@@ -381,9 +376,7 @@ class BugzillaRESTClient(HttpClient):
         if offset:
             params[self.POFFSET] = offset
 
-        response = self.call(self.RBUG, params)
-
-        return response
+        return self.call(self.RBUG, params)
 
     def comments(self, *bug_ids):
         """Get the comments of the given bugs.
@@ -397,9 +390,7 @@ class BugzillaRESTClient(HttpClient):
             self.PIDS: bug_ids
         }
 
-        response = self.call(resource, params)
-
-        return response
+        return self.call(resource, params)
 
     def history(self, *bug_ids):
         """Get the history of the given bugs.
@@ -412,9 +403,7 @@ class BugzillaRESTClient(HttpClient):
             self.PIDS: bug_ids
         }
 
-        response = self.call(resource, params)
-
-        return response
+        return self.call(resource, params)
 
     def attachments(self, *bug_ids):
         """Get the attachments of the given bugs.
@@ -428,9 +417,7 @@ class BugzillaRESTClient(HttpClient):
             self.PEXCLUDE_FIELDS: self.VEXCLUDE_ATTCH_DATA
         }
 
-        response = self.call(resource, params)
-
-        return response
+        return self.call(resource, params)
 
     def call(self, resource, params):
         """Retrive the given resource.
@@ -447,13 +434,11 @@ class BugzillaRESTClient(HttpClient):
         headers = None
         if self.api_key and not self.bugzilla_custom:
             params[self.PBUGZILLA_KEY] = self.api_key
-        elif self.api_key and self.bugzilla_custom:
+        elif self.api_key:
             # This header is needed because of the instance https://bugzilla.redhat.com does not support
             # these parameters: Bugzilla_login, Bugzilla_password, Bugzilla_token, Bugzilla_api_key
             # More info see https://bugzilla.redhat.com/docs/en/html/api/core/v1/general.html#authentication
-            headers = {
-                self.HAUTHORIZATION: "Bearer " + self.api_key
-            }
+            headers = {self.HAUTHORIZATION: f"Bearer {self.api_key}"}
         elif self.api_token:
             params[self.PBUGZILLA_TOKEN] = self.api_token
 

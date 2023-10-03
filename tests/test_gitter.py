@@ -45,8 +45,8 @@ from base import TestCaseBackendArchive
 GITTER_API_URL = 'https://api.gitter.im/v1/'
 GITTER_URL = 'https://gitter.im/'
 GITTER_ROOM_ID = '5e78b6b9d73408ce4fddb4e5'
-GITTER_MESSAGE_URL = GITTER_API_URL + 'rooms/' + GITTER_ROOM_ID + '/chatMessages'
-GITTER_ROOM_URL = GITTER_API_URL + 'rooms'
+GITTER_MESSAGE_URL = f'{GITTER_API_URL}rooms/{GITTER_ROOM_ID}/chatMessages'
+GITTER_ROOM_URL = f'{GITTER_API_URL}rooms'
 
 
 def setup_http_server(no_message=False, rate_limit_headers=None):
@@ -66,23 +66,29 @@ def setup_http_server(no_message=False, rate_limit_headers=None):
                            status=200,
                            forcing_headers=rate_limit_headers)
     if not no_message:
-        httpretty.register_uri(httpretty.GET,
-                               GITTER_MESSAGE_URL + '?limit=1&beforeId=5e78b710c2676245a82ab85a',
-                               body=message_empty,
-                               status=200,
-                               forcing_headers=rate_limit_headers)
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{GITTER_MESSAGE_URL}?limit=1&beforeId=5e78b710c2676245a82ab85a',
+            body=message_empty,
+            status=200,
+            forcing_headers=rate_limit_headers,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               GITTER_MESSAGE_URL + '?limit=1',
-                               body=message_page_1,
-                               status=200,
-                               forcing_headers=rate_limit_headers)
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{GITTER_MESSAGE_URL}?limit=1',
+            body=message_page_1,
+            status=200,
+            forcing_headers=rate_limit_headers,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               GITTER_MESSAGE_URL + '?limit=1',
-                               body=message_page_2,
-                               status=200,
-                               forcing_headers=rate_limit_headers)
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{GITTER_MESSAGE_URL}?limit=1',
+            body=message_page_2,
+            status=200,
+            forcing_headers=rate_limit_headers,
+        )
 
     else:
         httpretty.register_uri(httpretty.GET,
@@ -170,7 +176,7 @@ class TestGitterBackend(unittest.TestCase):
         setup_http_server()
 
         backend = Gitter(group='testapicomm', room='community', api_token='aaa', max_items=1)
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         self.assertEqual(len(messages), 2)
 
@@ -203,7 +209,7 @@ class TestGitterBackend(unittest.TestCase):
         setup_http_server()
         from_date = datetime.datetime(2020, 3, 24, 0, 0, tzinfo=dateutil.tz.tzutc())
         backend = Gitter(group='testapicomm', room='community', api_token='aaa', max_items=1)
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
         print(messages)
         self.assertEqual(len(messages), 1)
 
@@ -225,7 +231,7 @@ class TestGitterBackend(unittest.TestCase):
         setup_http_server()
 
         backend = Gitter(group='testapicomm', room='community', api_token='aaa')
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         message = messages[0]
         self.assertEqual(message['search_fields']['item_id'], backend.metadata_id(message['data']))
@@ -241,7 +247,7 @@ class TestGitterBackend(unittest.TestCase):
         setup_http_server(no_message=True)
 
         backend = Gitter(group='testapicomm', room='community', api_token='aaa')
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
         self.assertListEqual(messages, [])
 
     @httpretty.activate
@@ -253,7 +259,7 @@ class TestGitterBackend(unittest.TestCase):
         backend = Gitter(group='testapicomm', room='community_not', api_token='aaa')
         with self.assertLogs(logger, level='ERROR') as cm:
             with self.assertRaises(BackendError):
-                _ = [m for m in backend.fetch()]
+                _ = list(backend.fetch())
             self.assertEqual(cm.output[0], 'ERROR:perceval.backends.core.gitter:'
                                            'Room id not found for room testapicomm/community_not')
 
@@ -336,7 +342,7 @@ class TestGitterClient(unittest.TestCase):
 
         client = GitterClient(api_token='aaa', ssl_verify=True)
 
-        messages = [m for m in client.message_page(GITTER_ROOM_ID, before_id=None)]
+        messages = list(client.message_page(GITTER_ROOM_ID, before_id=None))
 
         self.assertEqual(len(messages), 6)
 
@@ -394,7 +400,7 @@ class TestGitterClient(unittest.TestCase):
                               sleep_for_rate=True)
 
         room_id = client.get_room_id('testapicomm/community')
-        _ = [m for m in client.message_page(room_id, before_id=None)]
+        _ = list(client.message_page(room_id, before_id=None))
         after = float(time.time())
 
         self.assertTrue(reset >= after)
@@ -414,7 +420,7 @@ class TestGitterClient(unittest.TestCase):
 
         room_id = client.get_room_id('testapicomm/community')
         with self.assertRaises(RateLimitError):
-            _ = [m for m in client.message_page(room_id, before_id=None)]
+            _ = list(client.message_page(room_id, before_id=None))
 
     def test_sanitize_for_archive(self):
         """Test whether the sanitize method works properly"""

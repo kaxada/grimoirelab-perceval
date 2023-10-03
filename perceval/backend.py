@@ -220,8 +220,7 @@ class Backend:
     @archive.setter
     def archive(self, obj):
         if obj and not isinstance(obj, Archive):
-            msg = "obj is not an instance of Archive. %s object given" \
-                % (str(type(obj)))
+            msg = f"obj is not an instance of Archive. {str(type(obj))} object given"
             raise ValueError(msg)
 
         self._archive = obj
@@ -245,8 +244,7 @@ class Backend:
         `'attributes.author_info.secret_info'` would hide the secret info of the
         author in the attributes dict.
         """
-        cfs = ['.'.join(cf) for cf in self.CLASSIFIED_FIELDS]
-        return cfs
+        return ['.'.join(cf) for cf in self.CLASSIFIED_FIELDS]
 
     def fetch_items(self, category, **kwargs):
         """Retrieve raw data from the repository.
@@ -300,7 +298,7 @@ class Backend:
         self._summary = Summary()
 
         if category not in self.categories:
-            cause = "%s category not valid for %s" % (category, self.__class__.__name__)
+            cause = f"{category} category not valid for {self.__class__.__name__}"
             raise BackendError(cause=cause)
 
         if filter_classified and self.archive:
@@ -572,8 +570,7 @@ def _find_value_from_nested_dict(nested_dict, path_to_field):
     key = path_to_field[0]
 
     if len(path_to_field) == 1:
-        value = nested_dict[key] if nested_dict else None
-        return value
+        return nested_dict[key] if nested_dict else None
     else:
         return _find_value_from_nested_dict(nested_dict[key], path_to_field[1:])
 
@@ -628,8 +625,11 @@ class BackendCommandArgumentParser:
         self.parser = argparse.ArgumentParser()
 
         group = self.parser.add_argument_group('general arguments')
-        group.add_argument('--category', dest='category',
-                           help="type of the items to fetch (%s)" % ','.join(self._backend.CATEGORIES))
+        group.add_argument(
+            '--category',
+            dest='category',
+            help=f"type of the items to fetch ({','.join(self._backend.CATEGORIES)})",
+        )
         group.add_argument('--tag', dest='tag',
                            help="tag the items generated during the fetching process")
         group.add_argument('--filter-classified', dest='filter_classified',
@@ -654,13 +654,16 @@ class BackendCommandArgumentParser:
                                help="offset to start fetching items")
         if blacklist:
             if not backend.ORIGIN_UNIQUE_FIELD:
-                msg = "Origin unique field not defined for {} backend".format(backend.__name__)
+                msg = f"Origin unique field not defined for {backend.__name__} backend"
                 raise BackendCommandArgumentParserError(cause=msg)
 
-            group.add_argument('--blacklist-ids', dest='blacklist_ids',
-                               nargs='*', type=backend.ORIGIN_UNIQUE_FIELD.type,
-                               help="Ids (field: %s) of items that must not be retrieved." %
-                                    backend.ORIGIN_UNIQUE_FIELD.name)
+            group.add_argument(
+                '--blacklist-ids',
+                dest='blacklist_ids',
+                nargs='*',
+                type=backend.ORIGIN_UNIQUE_FIELD.type,
+                help=f"Ids (field: {backend.ORIGIN_UNIQUE_FIELD.name}) of items that must not be retrieved.",
+            )
 
         if basic_auth or token_auth:
             self._set_auth_arguments(basic_auth=basic_auth,
@@ -829,9 +832,7 @@ class BackendCommand:
     def _initialize_archive(self):
         """Initialize archive based on the parsed parameters."""
 
-        if 'archive_path' not in self.parsed_args:
-            manager = None
-        elif self.parsed_args.no_archive:
+        if 'archive_path' not in self.parsed_args or self.parsed_args.no_archive:
             manager = None
         else:
             if not self.parsed_args.archive_path:
@@ -974,8 +975,7 @@ class BackendItemsGenerator:
         items = self.backend.fetch(**fetch_args)
 
         try:
-            for item in items:
-                yield item
+            yield from items
         except Exception as e:
             if manager:
                 archive_path = self.backend.archive.archive_path
@@ -1005,8 +1005,7 @@ class BackendItemsGenerator:
             items = self.backend.fetch_from_archive()
 
             try:
-                for item in items:
-                    yield item
+                yield from items
             except ArchiveError as e:
                 logger.warning("Ignoring %s archive due to: %s", filepath, str(e))
 
@@ -1079,7 +1078,7 @@ def uuid(*args):
     """
     def check_value(v):
         if not isinstance(v, str):
-            raise ValueError("%s value is not a string instance" % str(v))
+            raise ValueError(f"{str(v)} value is not a string instance")
         elif not v:
             raise ValueError("value cannot be None or empty")
         else:
@@ -1131,8 +1130,7 @@ def fetch(backend_class, backend_args, category, filter_classified=False,
     items = backend.fetch(**fetch_args)
 
     try:
-        for item in items:
-            yield item
+        yield from items
     except Exception as e:
         if manager:
             archive_path = archive.archive_path
@@ -1173,8 +1171,7 @@ def fetch_from_archive(backend_class, backend_args, manager,
         items = backend.fetch_from_archive()
 
         try:
-            for item in items:
-                yield item
+            yield from items
         except ArchiveError as e:
             logger.warning("Ignoring %s archive due to: %s", filepath, str(e))
 
@@ -1191,8 +1188,9 @@ def find_backends(top_package):
     :returns: a tuple with two dicts: one with `Backend` classes and one
         with `BackendCommand` classes
     """
-    candidates = pkgutil.walk_packages(top_package.__path__,
-                                       prefix=top_package.__name__ + '.')
+    candidates = pkgutil.walk_packages(
+        top_package.__path__, prefix=f'{top_package.__name__}.'
+    )
 
     modules = [name for _, name, is_pkg in candidates if not is_pkg]
 
@@ -1206,8 +1204,8 @@ def _import_backends(modules):
     bkls = _find_classes(Backend, modules)
     ckls = _find_classes(BackendCommand, modules)
 
-    backends = {name: kls for name, kls in bkls}
-    commands = {name: klass for name, klass in ckls}
+    backends = dict(bkls)
+    commands = dict(ckls)
 
     return backends, commands
 

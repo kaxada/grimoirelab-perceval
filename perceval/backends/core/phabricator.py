@@ -100,9 +100,7 @@ class Phabricator(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the tasks
@@ -215,9 +213,7 @@ class Phabricator(Backend):
         """
         results = json.loads(raw_json)
 
-        users = results['result']
-        for u in users:
-            yield u
+        yield from results['result']
 
     @staticmethod
     def parse_phids(results):
@@ -231,8 +227,7 @@ class Phabricator(Backend):
         :returns: a generator of parsed PHIDs
         """
 
-        for phid in results['result'].values():
-            yield phid
+        yield from results['result'].values()
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -246,7 +241,7 @@ class Phabricator(Backend):
         blacklist_ids = [int(x) for x in self.blacklist_ids]
         for raw_tasks in self.client.tasks(from_date=from_date):
 
-            tasks = [t for t in self.parse_tasks(raw_tasks, blacklist_ids)]
+            tasks = list(self.parse_tasks(raw_tasks, blacklist_ids))
 
             if not tasks:
                 break
@@ -304,11 +299,10 @@ class Phabricator(Backend):
 
         logger.debug("Project %s not found on client cache; fetching it", project_id)
 
-        phids = self.__fetch_and_parse_phids(project_id)
-        project = None
-        if phids:
+        if phids := self.__fetch_and_parse_phids(project_id):
             project = phids[0]
-
+        else:
+            project = None
         self._projects[project_id] = project
         return project
 
@@ -347,22 +341,17 @@ class Phabricator(Backend):
         return tasks_trans
 
     def __resolve_reassign_id(self, value):
-        if not value:
-            return value
-
-        resolved = self.__get_or_fetch_user(value)
-        return resolved
+        return value if not value else self.__get_or_fetch_user(value)
 
     def __resolve_policy_id(self, value):
         if not value:
             return value
 
-        if value.startswith('PHID-PROJ'):
-            resolved = self.__get_or_fetch_project(value)
-        else:
-            resolved = value
-
-        return resolved
+        return (
+            self.__get_or_fetch_project(value)
+            if value.startswith('PHID-PROJ')
+            else value
+        )
 
     def __resolve_board_ids(self, lst):
         if not lst:
@@ -428,19 +417,15 @@ class Phabricator(Backend):
         logger.debug("Fetching and parsing users data")
         raw_json = self.client.users(*users_ids)
         users = self.parse_users(raw_json)
-        return [user for user in users]
+        return list(users)
 
     def __fetch_and_parse_phids(self, *phids):
         logger.debug("Fetching and parsing phids data")
         raw_phids = self.client.phids(*phids)
         phids = json.loads(raw_phids)
 
-        result = []
-        if phids['result']:
-            # PHID checkpoint
-            result = self.parse_phids(phids)
-
-        return [phid for phid in result]
+        result = self.parse_phids(phids) if phids['result'] else []
+        return list(result)
 
 
 class ConduitError(BaseError):
@@ -525,10 +510,10 @@ class ConduitClient(HttpClient):
             r = self._call(self.MANIPHEST_TASKS, params)
             yield r
             j = json.loads(r)
-            after = j['result']['cursor']['after']
-            if not after:
+            if after := j['result']['cursor']['after']:
+                params[self.PAFTER] = after
+            else:
                 break
-            params[self.PAFTER] = after
 
     def transactions(self, *phids):
         """Retrieve tasks transactions.
@@ -539,9 +524,7 @@ class ConduitClient(HttpClient):
             self.PIDS: phids
         }
 
-        response = self._call(self.MANIPHEST_TRANSACTIONS, params)
-
-        return response
+        return self._call(self.MANIPHEST_TRANSACTIONS, params)
 
     def users(self, *phids):
         """Retrieve users.
@@ -552,9 +535,7 @@ class ConduitClient(HttpClient):
             self.PHIDS: phids
         }
 
-        response = self._call(self.PHAB_USERS, params)
-
-        return response
+        return self._call(self.PHAB_USERS, params)
 
     def phids(self, *phids):
         """Retrieve data about PHIDs.
@@ -565,9 +546,7 @@ class ConduitClient(HttpClient):
             self.PHIDS: phids
         }
 
-        response = self._call(self.PHAB_PHIDS, params)
-
-        return response
+        return self._call(self.PHAB_PHIDS, params)
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):

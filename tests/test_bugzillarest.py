@@ -43,13 +43,19 @@ from base import TestCaseBackendArchive
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
-BUGZILLA_LOGIN_URL = BUGZILLA_SERVER_URL + '/rest/login'
-BUGZILLA_VERSION_URL = BUGZILLA_SERVER_URL + '/rest/version'
-BUGZILLA_BUGS_URL = BUGZILLA_SERVER_URL + '/rest/bug'
-BUGZILLA_BUGS_COMMENTS_1273442_URL = BUGZILLA_SERVER_URL + '/rest/bug/1273442/comment'
-BUGZILLA_BUGS_HISTORY_1273442_URL = BUGZILLA_SERVER_URL + '/rest/bug/1273442/history'
-BUGZILLA_BUGS_ATTACHMENTS_1273442_URL = BUGZILLA_SERVER_URL + '/rest/bug/1273442/attachment'
-BUGZILLA_BUG_947945_URL = BUGZILLA_SERVER_URL + '/rest/bug/947945/'
+BUGZILLA_LOGIN_URL = f'{BUGZILLA_SERVER_URL}/rest/login'
+BUGZILLA_VERSION_URL = f'{BUGZILLA_SERVER_URL}/rest/version'
+BUGZILLA_BUGS_URL = f'{BUGZILLA_SERVER_URL}/rest/bug'
+BUGZILLA_BUGS_COMMENTS_1273442_URL = (
+    f'{BUGZILLA_SERVER_URL}/rest/bug/1273442/comment'
+)
+BUGZILLA_BUGS_HISTORY_1273442_URL = (
+    f'{BUGZILLA_SERVER_URL}/rest/bug/1273442/history'
+)
+BUGZILLA_BUGS_ATTACHMENTS_1273442_URL = (
+    f'{BUGZILLA_SERVER_URL}/rest/bug/1273442/attachment'
+)
+BUGZILLA_BUG_947945_URL = f'{BUGZILLA_SERVER_URL}/rest/bug/947945/'
 
 
 def read_file(filename, mode='r'):
@@ -174,7 +180,7 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
-        bugs = [bug for bug in bg.fetch(from_date=None)]
+        bugs = list(bg.fetch(from_date=None))
 
         self.assertEqual(len(bugs), 3)
 
@@ -264,7 +270,7 @@ class TestBugzillaRESTBackend(unittest.TestCase):
         setup_http_server()
 
         bg = BugzillaREST(BUGZILLA_SERVER_URL, max_bugs=2)
-        bugs = [bug for bug in bg.fetch(from_date=None)]
+        bugs = list(bg.fetch(from_date=None))
 
         self.assertEqual(len(bugs), 3)
 
@@ -303,7 +309,7 @@ class TestBugzillaRESTBackend(unittest.TestCase):
                                status=200)
 
         bg = BugzillaREST(BUGZILLA_SERVER_URL)
-        bugs = [bug for bug in bg.fetch()]
+        bugs = list(bg.fetch())
 
         self.assertEqual(len(bugs), 0)
 
@@ -598,7 +604,7 @@ class TestBugzillaRESTClient(unittest.TestCase):
         self.assertTrue(client.bugzilla_custom)
 
         # Set up a mock HTTP server
-        body_400_error = "400 Client Error: Bad Request for url: " + BUGZILLA_VERSION_URL + "?api_key=abcdef"
+        body_400_error = f"400 Client Error: Bad Request for url: {BUGZILLA_VERSION_URL}?api_key=abcdef"
         httpretty.register_uri(httpretty.GET,
                                BUGZILLA_VERSION_URL,
                                body=body_400_error,

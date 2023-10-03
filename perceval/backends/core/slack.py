@@ -99,9 +99,7 @@ class Slack(Backend):
         latest = datetime_utcnow().timestamp()
 
         kwargs = {'from_date': from_date, 'latest': latest}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
@@ -212,9 +210,7 @@ class Slack(Backend):
 
         :returns: a UNIX timestamp
         """
-        ts = float(item['ts'])
-
-        return ts
+        return float(item['ts'])
 
     @staticmethod
     def metadata_category(item):
@@ -333,8 +329,6 @@ class SlackClient(HttpClient):
 
         :param conversation: the ID of the conversation
         """
-        members = 0
-
         resource = self.RCONVERSATION_MEMBERS
 
         params = {
@@ -344,7 +338,7 @@ class SlackClient(HttpClient):
         raw_response = self._fetch(resource, params)
         response = json.loads(raw_response)
 
-        members += len(response["members"])
+        members = 0 + len(response["members"])
         while 'next_cursor' in response['response_metadata'] and response['response_metadata']['next_cursor']:
             params['cursor'] = response['response_metadata']['next_cursor']
             raw_response = self._fetch(resource, params)
@@ -362,9 +356,7 @@ class SlackClient(HttpClient):
             self.PCHANNEL: channel,
         }
 
-        response = self._fetch(resource, params)
-
-        return response
+        return self._fetch(resource, params)
 
     def history(self, channel, oldest=None, latest=None):
         """Fetch the history of a channel."""
@@ -383,9 +375,7 @@ class SlackClient(HttpClient):
             formatted_latest = self.__format_timestamp(latest)
             params[self.PLATEST] = formatted_latest
 
-        response = self._fetch(resource, params)
-
-        return response
+        return self._fetch(resource, params)
 
     def user(self, user_id):
         """Fetch user info."""
@@ -396,9 +386,7 @@ class SlackClient(HttpClient):
             self.PUSER: user_id
         }
 
-        response = self._fetch(resource, params)
-
-        return response
+        return self._fetch(resource, params)
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):
@@ -424,9 +412,7 @@ class SlackClient(HttpClient):
             the given resource
         """
         url = self.URL % {'resource': resource}
-        headers = {
-            self.AUTHORIZATION_HEADER: 'Bearer {}'.format(self.api_token)
-        }
+        headers = {self.AUTHORIZATION_HEADER: f'Bearer {self.api_token}'}
 
         logger.debug("Slack client requests: %s params: %s",
                      resource, str(params))

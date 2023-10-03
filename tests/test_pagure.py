@@ -39,15 +39,17 @@ from perceval.backends.core.pagure import (logger,
 from base import TestCaseBackendArchive
 
 PAGURE_API_URL = "https://pagure.io/api/0"
-PAGURE_REPO_URL = PAGURE_API_URL + "/Project-example"
-PAGURE_ISSUES_URL = PAGURE_REPO_URL + "/issues"
+PAGURE_REPO_URL = f"{PAGURE_API_URL}/Project-example"
+PAGURE_ISSUES_URL = f"{PAGURE_REPO_URL}/issues"
 
 # Repository with issue tracker disabled
-PAGURE_REPO_URL_DISABLED_URL = PAGURE_API_URL + "/Project-test-example"
-PAGURE_ISSUES_DISABLED_URL = PAGURE_REPO_URL_DISABLED_URL + "/issues"
+PAGURE_REPO_URL_DISABLED_URL = f"{PAGURE_API_URL}/Project-test-example"
+PAGURE_ISSUES_DISABLED_URL = f"{PAGURE_REPO_URL_DISABLED_URL}/issues"
 
-PAGURE_NAMESPACE_REPO_URL = PAGURE_API_URL + "/Test-group/Project-namespace-example"
-PAGURE_NAMESPACE_ISSUES_URL = PAGURE_NAMESPACE_REPO_URL + "/issues"
+PAGURE_NAMESPACE_REPO_URL = (
+    f"{PAGURE_API_URL}/Test-group/Project-namespace-example"
+)
+PAGURE_NAMESPACE_ISSUES_URL = f"{PAGURE_NAMESPACE_REPO_URL}/issues"
 
 
 def read_file(filename, mode='r'):
@@ -132,7 +134,7 @@ class TestPagureBackend(unittest.TestCase):
                                status=200,
                                )
         pagure = Pagure(repository='Project-example', api_token='aaa')
-        issues = [issues for issues in pagure.fetch(from_date=None, to_date=None)]
+        issues = list(pagure.fetch(from_date=None, to_date=None))
 
         self.assertEqual(len(issues), 1)
 
@@ -161,7 +163,7 @@ class TestPagureBackend(unittest.TestCase):
         pagure = Pagure(repository='Project-test-example')
 
         with self.assertLogs(logger, level='WARN') as cm:
-            issues = [issues for issues in pagure.fetch(from_date=None, to_date=None)]
+            issues = list(pagure.fetch(from_date=None, to_date=None))
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.pagure:'
                                            'The issue tracker is disabled please enable'
                                            ' the feature for the repository')
@@ -181,7 +183,7 @@ class TestPagureBackend(unittest.TestCase):
                                )
 
         pagure = Pagure(repository='Project-example', api_token='aaa')
-        issues = [issues for issues in pagure.fetch(from_date=None, to_date=None)]
+        issues = list(pagure.fetch(from_date=None, to_date=None))
 
         issue = issues[0]
         self.assertEqual(pagure.metadata_id(issue['data']), issue['search_fields']['item_id'])
@@ -195,24 +197,25 @@ class TestPagureBackend(unittest.TestCase):
         issue_1 = read_file('data/pagure/pagure_repo_issue_1')
         issue_2 = read_file('data/pagure/pagure_repo_only_issue_2')
 
-        httpretty.register_uri(httpretty.GET,
-                               PAGURE_ISSUES_URL,
-                               body=issue_1,
-                               status=200,
-                               forcing_headers={
-                                   'Link': '<' + PAGURE_ISSUES_URL + '/?&page=2>; rel="next", <' +
-                                           PAGURE_ISSUES_URL + '/?&page=3>; rel="last"'
-                               }
-                               )
+        httpretty.register_uri(
+            httpretty.GET,
+            PAGURE_ISSUES_URL,
+            body=issue_1,
+            status=200,
+            forcing_headers={
+                'Link': f'<{PAGURE_ISSUES_URL}/?&page=2>; rel="next", <{PAGURE_ISSUES_URL}/?&page=3>; rel="last"'
+            },
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               PAGURE_ISSUES_URL + '/?&page=2',
-                               body=issue_2,
-                               status=200,
-                               )
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{PAGURE_ISSUES_URL}/?&page=2',
+            body=issue_2,
+            status=200,
+        )
 
         pagure = Pagure(repository='Project-example')
-        issues = [issues for issues in pagure.fetch()]
+        issues = list(pagure.fetch())
 
         self.assertEqual(len(issues), 2)
 
@@ -247,25 +250,26 @@ class TestPagureBackend(unittest.TestCase):
         issue_1 = read_file('data/pagure/pagure_repo_issue_1')
         issue_2 = read_file('data/pagure/pagure_repo_only_issue_2')
 
-        httpretty.register_uri(httpretty.GET,
-                               PAGURE_ISSUES_URL,
-                               body=issue_1,
-                               status=200,
-                               forcing_headers={
-                                   'Link': '<' + PAGURE_ISSUES_URL + '/?&page=2>; rel="next", <' +
-                                           PAGURE_ISSUES_URL + '/?&page=3>; rel="last"'
-                               }
-                               )
+        httpretty.register_uri(
+            httpretty.GET,
+            PAGURE_ISSUES_URL,
+            body=issue_1,
+            status=200,
+            forcing_headers={
+                'Link': f'<{PAGURE_ISSUES_URL}/?&page=2>; rel="next", <{PAGURE_ISSUES_URL}/?&page=3>; rel="last"'
+            },
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               PAGURE_ISSUES_URL + '/?&page=2',
-                               body=issue_2,
-                               status=200,
-                               )
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{PAGURE_ISSUES_URL}/?&page=2',
+            body=issue_2,
+            status=200,
+        )
 
         to_date = datetime.datetime(2020, 3, 7)
         pagure = Pagure(repository='Project-example')
-        issues = [issues for issues in pagure.fetch(to_date=to_date)]
+        issues = list(pagure.fetch(to_date=to_date))
 
         self.assertEqual(len(issues), 1)
 
@@ -293,7 +297,7 @@ class TestPagureBackend(unittest.TestCase):
 
         from_date = datetime.datetime(2020, 3, 7)
         pagure = Pagure(repository='Project-example')
-        issues = [issues for issues in pagure.fetch(from_date=from_date)]
+        issues = list(pagure.fetch(from_date=from_date))
 
         self.assertEqual(len(issues), 1)
         issue = issues[0]
@@ -318,7 +322,7 @@ class TestPagureBackend(unittest.TestCase):
                                )
 
         pagure = Pagure(namespace='Test-group', repository='Project-namespace-example')
-        issues = [issues for issues in pagure.fetch()]
+        issues = list(pagure.fetch())
 
         self.assertEqual(len(issues), 2)
 
@@ -358,7 +362,7 @@ class TestPagureBackend(unittest.TestCase):
         from_date = datetime.datetime(2016, 1, 1)
         pagure = Pagure(repository='Project-example', api_token='aaa')
 
-        issues = [issues for issues in pagure.fetch(from_date=from_date)]
+        issues = list(pagure.fetch(from_date=from_date))
 
         self.assertEqual(len(issues), 0)
 
@@ -465,7 +469,7 @@ class TestPagureClient(unittest.TestCase):
                                )
 
         client = PagureClient(namespace=None, repository='Project-example', token='aaa')
-        raw_issues = [issues for issues in client.issues()]
+        raw_issues = list(client.issues())
         self.assertEqual(raw_issues[0], issues)
 
         # Check requests
@@ -490,7 +494,7 @@ class TestPagureClient(unittest.TestCase):
 
         client = PagureClient(namespace='Test-group', repository='Project-namespace-example', token=None)
 
-        raw_issues = [issues for issues in client.issues()]
+        raw_issues = list(client.issues())
         self.assertEqual(raw_issues[0], issue)
 
         # Check requests
@@ -518,7 +522,7 @@ class TestPagureClient(unittest.TestCase):
         from_date = datetime.datetime(2020, 3, 7)
         client = PagureClient(namespace=None, repository='Project-example', token='aaa')
 
-        raw_issues = [issues for issues in client.issues(from_date=from_date)]
+        raw_issues = list(client.issues(from_date=from_date))
         self.assertEqual(raw_issues[0], issues)
 
         # Check requests
@@ -544,7 +548,7 @@ class TestPagureClient(unittest.TestCase):
 
         client = PagureClient(namespace=None, repository="Project-example", token="aaa")
 
-        raw_issues = [issues for issues in client.issues()]
+        raw_issues = list(client.issues())
         self.assertEqual(raw_issues[0], issue)
 
         # Check requests
@@ -572,7 +576,7 @@ class TestPagureClient(unittest.TestCase):
         client = PagureClient(namespace=None, repository="Project-example", token="aaa", sleep_time=1, max_retries=1)
 
         with self.assertRaises(requests.exceptions.HTTPError):
-            _ = [issues for issues in client.issues()]
+            _ = list(client.issues())
 
         # Check requests
         expected = {
@@ -591,23 +595,25 @@ class TestPagureClient(unittest.TestCase):
         issue_1 = read_file('data/pagure/pagure_repo_issue_1')
         issue_2 = read_file('data/pagure/pagure_repo_only_issue_2')
 
-        httpretty.register_uri(httpretty.GET,
-                               PAGURE_ISSUES_URL,
-                               body=issue_1,
-                               status=200,
-                               forcing_headers={
-                                   'Link': '<' + PAGURE_ISSUES_URL + '/?&page=2>; rel="next", <' +
-                                           PAGURE_ISSUES_URL + '/?&page=3>; rel="last"'
-                               })
-        httpretty.register_uri(httpretty.GET,
-                               PAGURE_ISSUES_URL + '/?&page=2',
-                               body=issue_2,
-                               status=200,
-                               )
+        httpretty.register_uri(
+            httpretty.GET,
+            PAGURE_ISSUES_URL,
+            body=issue_1,
+            status=200,
+            forcing_headers={
+                'Link': f'<{PAGURE_ISSUES_URL}/?&page=2>; rel="next", <{PAGURE_ISSUES_URL}/?&page=3>; rel="last"'
+            },
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f'{PAGURE_ISSUES_URL}/?&page=2',
+            body=issue_2,
+            status=200,
+        )
 
         client = PagureClient(namespace=None, repository="Project-example", token="aaa")
 
-        issues = [issues for issues in client.issues()]
+        issues = list(client.issues())
 
         self.assertEqual(len(issues), 2)
         self.assertEqual(issues[0], issue_1)

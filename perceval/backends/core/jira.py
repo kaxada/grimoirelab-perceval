@@ -72,14 +72,9 @@ def filter_custom_fields(fields):
     :returns: an object with the filtered custom fields
     """
 
-    custom_fields = {}
-
     sorted_fields = [field for field in fields if field['custom'] is True]
 
-    for custom_field in sorted_fields:
-        custom_fields[custom_field['id']] = custom_field
-
-    return custom_fields
+    return {custom_field['id']: custom_field for custom_field in sorted_fields}
 
 
 class Jira(Backend):
@@ -146,9 +141,7 @@ class Jira(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the issues
@@ -240,9 +233,7 @@ class Jira(Backend):
         :returns: a generator of issues
         """
         raw_issues = json.loads(raw_page)
-        issues = raw_issues['issues']
-        for issue in issues:
-            yield issue
+        yield from raw_issues['issues']
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -350,9 +341,7 @@ class JiraClient(HttpClient):
         :param from_date: obtain issues updated since this date
         """
         url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, self.RSEARCH)
-        issues = self.get_items(from_date, url)
-
-        return issues
+        return self.get_items(from_date, url)
 
     def get_comments(self, issue_id):
         """Retrieve all the comments of a given issue.
@@ -360,9 +349,7 @@ class JiraClient(HttpClient):
         :param issue_id: ID of the issue
         """
         url = urijoin(self.base_url, self.RESOURCE, self.VERSION_API, self.RISSUE, issue_id, self.RCOMMENT)
-        comments = self.get_items(DEFAULT_DATETIME, url, expand_fields=False)
-
-        return comments
+        return self.get_items(DEFAULT_DATETIME, url, expand_fields=False)
 
     def get_fields(self):
         """Retrieve all the fields available."""
@@ -383,15 +370,11 @@ class JiraClient(HttpClient):
         # This allows us to use the timezone of the given date
         strdate = str(int(from_date.timestamp() * 1000))
 
-        if self.project:
-            jql_query = ' '.join([PROJECT_OP, self.project, AND_OP,
-                                  UPDATED_OP, strdate])
-        else:
-            jql_query = ' '.join([UPDATED_OP, strdate])
-
-        jql_query += ' '.join(['', ORDER_BY_OP, 'updated', ASC_OP])
-
-        return jql_query
+        return (
+            ' '.join([PROJECT_OP, self.project, AND_OP, UPDATED_OP, strdate])
+            if self.project
+            else ' '.join([UPDATED_OP, strdate])
+        ) + ' '.join(['', ORDER_BY_OP, 'updated', ASC_OP])
 
     def __build_payload(self, start_at, from_date, expand=True):
         payload = {
@@ -409,9 +392,9 @@ class JiraClient(HttpClient):
     def __log_status(self, max_items, total, url):
         if total != 0:
             nitems = min(max_items, total)
-            logger.info("Fetching %s/%s items from %s" % (nitems, total, url))
+            logger.info(f"Fetching {nitems}/{total} items from {url}")
         else:
-            logger.info("No items were found for %s." % url)
+            logger.info(f"No items were found for {url}.")
 
     def __init_session(self):
         if (self.user and self.password) is not None:

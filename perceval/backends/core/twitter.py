@@ -86,7 +86,7 @@ class Twitter(Backend):
         origin = TWITTER_URL
 
         if len(query) >= MAX_SEARCH_QUERY:
-            msg = "Search query length exceeded %s, max is %s" % (len(query), MAX_SEARCH_QUERY)
+            msg = f"Search query length exceeded {len(query)}, max is {MAX_SEARCH_QUERY}"
             raise BackendError(cause=msg)
 
         super().__init__(origin, tag=tag, archive=archive, ssl_verify=ssl_verify)
@@ -141,9 +141,7 @@ class Twitter(Backend):
                   "lang": lang,
                   "include_entities": include_entities,
                   "result_type": tweets_type}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the tweets
@@ -287,7 +285,7 @@ class TwitterClient(HttpClient, RateLimitHandler):
         """Number of seconds to wait. They are contained in the rate limit reset header"""
 
         time_to_reset = self.rate_limit_reset_ts - (datetime_utcnow().replace(microsecond=0).timestamp() + 1)
-        time_to_reset = 0 if time_to_reset < 0 else time_to_reset
+        time_to_reset = max(time_to_reset, 0)
 
         return time_to_reset
 
@@ -365,7 +363,7 @@ class TwitterClient(HttpClient, RateLimitHandler):
         if not self.from_archive:
             self.sleep_for_rate_limit()
 
-        headers = {self.HAUTHORIZATION: 'Bearer ' + self.api_key}
+        headers = {self.HAUTHORIZATION: f'Bearer {self.api_key}'}
         r = self.fetch(url, payload=params, headers=headers)
 
         if not self.from_archive:

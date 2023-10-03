@@ -92,9 +92,7 @@ class DockerHub(Backend):
         :returns: a generator of data
         """
         kwargs = {}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the Dockher Hub items
@@ -172,8 +170,7 @@ class DockerHub(Backend):
 
         :returns: a dict with the parsed data
         """
-        result = json.loads(raw_json)
-        return result
+        return json.loads(raw_json)
 
     def _init_client(self, from_archive=False):
         """Init client"""

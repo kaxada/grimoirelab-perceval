@@ -100,9 +100,7 @@ class Bugzilla(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {"from_date": from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the bugs
@@ -118,7 +116,7 @@ class Bugzilla(Backend):
         logger.info("Looking for bugs: '%s' updated from '%s'",
                     self.url, str(from_date))
 
-        buglist = [bug for bug in self.__fetch_buglist(from_date)]
+        buglist = list(self.__fetch_buglist(from_date))
 
         nbugs = 0
         tbugs = len(buglist)
@@ -200,10 +198,9 @@ class Bugzilla(Backend):
 
         :returns: a generator of parsed bugs
         """
-        reader = csv.DictReader(raw_csv.split('\n'),
-                                delimiter=',', quotechar='"')
-        for row in reader:
-            yield row
+        yield from csv.DictReader(
+            raw_csv.split('\n'), delimiter=',', quotechar='"'
+        )
 
     @staticmethod
     def parse_bugs_details(raw_xml):
@@ -229,8 +226,7 @@ class Bugzilla(Backend):
             cause = "No bugs found. XML stream seems to be invalid."
             raise ParseError(cause=cause)
 
-        for bug in bugs['bug']:
-            yield bug
+        yield from bugs['bug']
 
     @staticmethod
     def parse_bug_activity(raw_html):
@@ -302,12 +298,13 @@ class Bugzilla(Backend):
                 what = fields.pop(0)
                 removed = fields.pop(0)
                 added = fields.pop(0)
-                event = {'Who': format_text(who),
-                         'When': format_text(when),
-                         'What': format_text(what),
-                         'Removed': format_text(removed),
-                         'Added': format_text(added)}
-                yield event
+                yield {
+                    'Who': format_text(who),
+                    'When': format_text(when),
+                    'What': format_text(what),
+                    'Removed': format_text(removed),
+                    'Added': format_text(added),
+                }
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -336,7 +333,7 @@ class Bugzilla(Backend):
         logger.debug("Fetching and parsing buglist page from %s", str(from_date))
         raw_csv = self.client.buglist(from_date=from_date)
         buglist = self.parse_buglist(raw_csv)
-        return [bug for bug in buglist]
+        return list(buglist)
 
     def __fetch_and_parse_bugs_details(self, *bug_ids):
         logger.debug("Fetching and parsing bugs details")
@@ -347,7 +344,7 @@ class Bugzilla(Backend):
         logger.debug("Fetching and parsing bug #%s activity", bug_id)
         raw_activity = self.client.bug_activity(bug_id)
         activity = self.parse_bug_activity(raw_activity)
-        return [event for event in activity]
+        return list(activity)
 
 
 class BugzillaCommand(BackendCommand):
@@ -449,14 +446,13 @@ class BugzillaClient(HttpClient):
         :param user: Bugzilla user
         :param password: user password
         """
-        url = self.URL % {'base': self.base_url, 'cgi': self.CGI_LOGIN}
-
         payload = {
             self.PBUGZILLA_LOGIN: user,
             self.PBUGZILLA_PASSWORD: password,
             self.PLOGIN: 'Log in'
         }
 
+        url = self.URL % {'base': self.base_url, 'cgi': self.CGI_LOGIN}
         headers = {'Referer': self.base_url}
 
         req = self.fetch(url, payload=payload, headers=headers, method=HttpClient.POST)
@@ -464,9 +460,7 @@ class BugzillaClient(HttpClient):
         # Check if the authentication went OK. When this string
         # is found means that the authentication was successful
         if req.text.find("index.cgi?logout=1") < 0:
-            cause = ("Bugzilla client could not authenticate user %s. "
-                     "Please check user and password parameters. "
-                     "URLs may also need a trailing '/'.") % user
+            cause = f"Bugzilla client could not authenticate user {user}. Please check user and password parameters. URLs may also need a trailing '/'."
             raise BackendError(cause=cause)
 
         logger.debug("Bugzilla user %s authenticated in %s",
@@ -492,9 +486,7 @@ class BugzillaClient(HttpClient):
             self.PCTYPE: self.CTYPE_XML
         }
 
-        response = self.call(self.CGI_BUG, params)
-
-        return response
+        return self.call(self.CGI_BUG, params)
 
     def buglist(self, from_date=DEFAULT_DATETIME):
         """Get a summary of bugs in CSV format.
@@ -518,9 +510,7 @@ class BugzillaClient(HttpClient):
             self.PORDER: order
         }
 
-        response = self.call(self.CGI_BUGLIST, params)
-
-        return response
+        return self.call(self.CGI_BUGLIST, params)
 
     def bugs(self, *bug_ids):
         """Get the information of a list of bugs in XML format.
@@ -533,9 +523,7 @@ class BugzillaClient(HttpClient):
             self.PEXCLUDE_FIELD: 'attachmentdata'
         }
 
-        response = self.call(self.CGI_BUG, params)
-
-        return response
+        return self.call(self.CGI_BUG, params)
 
     def bug_activity(self, bug_id):
         """Get the activity of a bug in HTML format.
@@ -546,9 +534,7 @@ class BugzillaClient(HttpClient):
             self.PBUG_ID: bug_id
         }
 
-        response = self.call(self.CGI_BUG_ACTIVITY, params)
-
-        return response
+        return self.call(self.CGI_BUG_ACTIVITY, params)
 
     def call(self, cgi, params):
         """Run an API command.
@@ -590,9 +576,7 @@ class BugzillaClient(HttpClient):
 
     def __fetch_version(self):
         response = self.metadata()
-        m = re.match(self.VERSION_REGEX, response)
-
-        if m:
+        if m := re.match(self.VERSION_REGEX, response):
             version = m.group(1)
             logger.debug("Bugzilla server is online: %s (v. %s)",
                          self.base_url, version)

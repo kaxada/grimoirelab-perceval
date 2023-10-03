@@ -87,7 +87,7 @@ class TestSupybotBackend(unittest.TestCase):
         """Test if it parses a set of log files"""
 
         backend = Supybot('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         expected = [('benpol', 'comment', '86cd62e954f3c81f2efd336b163b673419e722c4', 1350465381.0),
                     ('benpol', 'comment', 'c3d38be79806e98b50d308f4fdf078ed89aef68c', 1350465389.0),
@@ -122,7 +122,7 @@ class TestSupybotBackend(unittest.TestCase):
         """Test whether the search_fields is properly set"""
 
         backend = Supybot('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         message = messages[0]
         self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
@@ -142,7 +142,7 @@ class TestSupybotBackend(unittest.TestCase):
         from_date = datetime.datetime(2012, 10, 18, 9, 33, 5)
 
         backend = Supybot('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
 
         expected = [('scuttlemonkey', 'comment', '768843f086ef41b2346eff72c8f2935b0e23148c', 1350552785.0),
                     ('loicd', 'server', 'f4cdf0c9c3219d5931f704438d85a7665ad6d99e', 1350584011.0),
@@ -166,7 +166,7 @@ class TestSupybotBackend(unittest.TestCase):
         # Empty lines and empty comment lines are ignored
         messages = Supybot.parse_supybot_log(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                           'data/supybot/supybot_valid.log'))
-        messages = [m for m in messages]
+        messages = list(messages)
 
         self.assertEqual(len(messages), 97)
 
@@ -194,7 +194,7 @@ class TestSupybotBackend(unittest.TestCase):
         # Empty lines and empty comment lines are ignored
         messages = Supybot.parse_supybot_log(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                           'data/supybot/supybot_date_without_tz.log'))
-        messages = [m for m in messages]
+        messages = list(messages)
 
         self.assertEqual(len(messages), 3)
 
@@ -222,7 +222,7 @@ class TestSupybotBackend(unittest.TestCase):
         with self.assertRaises(ParseError):
             messages = Supybot.parse_supybot_log(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                               'data/supybot/supybot_invalid_msg.log'))
-            _ = [message for message in messages]
+            _ = list(messages)
 
 
 class TestSupybotCommand(unittest.TestCase):
@@ -259,7 +259,7 @@ class TestSupybotParser(unittest.TestCase):
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/supybot/supybot_valid.log"), 'r') as f:
             parser = SupybotParser(f)
-            items = [item for item in parser.parse()]
+            items = list(parser.parse())
 
         self.assertEqual(len(items), 97)
 
@@ -311,18 +311,18 @@ class TestSupybotParser(unittest.TestCase):
 
         with self.assertRaisesRegex(ParseError, "date expected on line 4"):
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   "data/supybot/supybot_invalid_date.log"), 'r') as f:
+                                           "data/supybot/supybot_invalid_date.log"), 'r') as f:
                 parser = SupybotParser(f)
-                _ = [item for item in parser.parse()]
+                _ = list(parser.parse())
 
     def test_parse_invalid_message(self):
         """Test whether it raises an exception when an invalid line is found"""
 
         with self.assertRaisesRegex(ParseError, "invalid message on line 9"):
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   "data/supybot/supybot_invalid_msg.log"), 'r') as f:
+                                           "data/supybot/supybot_invalid_msg.log"), 'r') as f:
                 parser = SupybotParser(f)
-                _ = [item for item in parser.parse()]
+                _ = list(parser.parse())
 
     def test_timestamp_pattern(self):
         """Test the validation of timestamp lines"""

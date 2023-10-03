@@ -101,13 +101,11 @@ class Pagure(Backend):
 
         :returns: a dict of search fields
         """
-        search_fields = {
+        return {
             DEFAULT_SEARCH_FIELD: self.metadata_id(item),
             'namespace': self.namespace,
-            'repo': self.repository
+            'repo': self.repository,
         }
-
-        return search_fields
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
               filter_classified=False):
@@ -135,11 +133,9 @@ class Pagure(Backend):
             'from_date': from_date,
             'to_date': to_date
         }
-        items = super().fetch(category,
-                              filter_classified=filter_classified,
-                              **kwargs)
-
-        return items
+        return super().fetch(
+            category, filter_classified=filter_classified, **kwargs
+        )
 
     def fetch_items(self, category, **kwargs):
         """Fetch the items (issues)
@@ -151,8 +147,7 @@ class Pagure(Backend):
         """
         from_date = kwargs['from_date']
         to_date = kwargs['to_date']
-        items = self.__fetch_issues(from_date, to_date)
-        return items
+        return self.__fetch_issues(from_date, to_date)
 
     @classmethod
     def has_archiving(cls):
@@ -189,9 +184,7 @@ class Pagure(Backend):
         :returns: a UNIX timestamp
         """
         ts = int(item['last_updated'])
-        ts = datetime.fromtimestamp(ts).timestamp()
-
-        return ts
+        return datetime.fromtimestamp(ts).timestamp()
 
     @staticmethod
     def metadata_category(item):
@@ -200,9 +193,7 @@ class Pagure(Backend):
         This backend generates one type of item which is
         'issue'.
         """
-        category = CATEGORY_ISSUE
-
-        return category
+        return CATEGORY_ISSUE
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -311,12 +302,14 @@ class PagureClient(HttpClient):
         try:
             response = super().fetch(url, payload, headers)
         except requests.exceptions.HTTPError as error:
-            if error.response.status_code == 404 and str(error.response.reason).upper() == 'NOT FOUND':
-                logger.warning("The issue tracker is disabled please enable the feature for the repository")
-                return None
-            else:
+            if (
+                error.response.status_code != 404
+                or str(error.response.reason).upper() != 'NOT FOUND'
+            ):
                 raise error
 
+            logger.warning("The issue tracker is disabled please enable the feature for the repository")
+            return None
         return response
 
     def fetch_items(self, path, payload):
@@ -327,18 +320,16 @@ class PagureClient(HttpClient):
 
         :returns: a generator of items
         """
-        page = 0  # current page
         last_page = None  # last page
         url_next = self.__get_url_item(path)
-        logger.debug("Get Pagure paginated items from " + url_next)
+        logger.debug(f"Get Pagure paginated items from {url_next}")
 
         response = self.fetch(url_next, payload=payload)
         if not response:
             return []
 
         items = response.text
-        page += 1
-
+        page = 0 + 1
         if 'last' in response.links:
             last_url = response.links['last']['url']
             last_page = last_url.split('&page=')[1].split('&')[0]
@@ -361,11 +352,7 @@ class PagureClient(HttpClient):
     def _set_extra_headers(self):
         """Set extra headers for session"""
 
-        headers = {}
-        if self.token:
-            headers = {self.HAUTHORIZATION: "token %s" % self.token}
-
-        return headers
+        return {self.HAUTHORIZATION: f"token {self.token}"} if self.token else {}
 
     def __get_url_item(self, path):
         """Returns the url from which the item is to be fetched"""

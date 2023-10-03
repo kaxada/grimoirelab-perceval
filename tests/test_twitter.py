@@ -49,10 +49,12 @@ TWITTER_API_URL = 'https://api.twitter.com/1.1/search/tweets.json'
 def setup_http_server(no_tweets=False, rate_limit=None, reset_rate_limit=None, status=200):
     """Setup a mock HTTP server"""
 
-    headers = {}
-    headers['x-rate-limit-remaining'] = '20' if not rate_limit else rate_limit
-    headers['x-rate-limit-reset'] = '15' if not reset_rate_limit else reset_rate_limit
-
+    headers = {
+        'x-rate-limit-remaining': '20' if not rate_limit else rate_limit,
+        'x-rate-limit-reset': '15'
+        if not reset_rate_limit
+        else reset_rate_limit,
+    }
     if no_tweets:
         tweets_page_empty = read_file('data/twitter/tweets_page_3.json')
 
@@ -136,7 +138,7 @@ class TestTwitterBackend(unittest.TestCase):
     def test_initialization_long_query(self):
         """Test whether an exception is thrown when the search query is too long"""
 
-        long_query = ''.join(['a' for i in range(0, 500)])
+        long_query = ''.join(['a' for _ in range(0, 500)])
         with self.assertRaises(BackendError):
             _ = Twitter(long_query, 'my-token', max_items=5, tag='test',
                         sleep_for_rate=True, min_rate_to_sleep=10, sleep_time=60)
@@ -157,7 +159,7 @@ class TestTwitterBackend(unittest.TestCase):
 
         setup_http_server()
         twitter = Twitter('query', 'my-token', max_items=2)
-        tweets = [tweets for tweets in twitter.fetch()]
+        tweets = list(twitter.fetch())
 
         expected = ['1005149094560530432', '1005148958111555584', '1005277806383673344', '1005163131042193408']
 
@@ -176,7 +178,7 @@ class TestTwitterBackend(unittest.TestCase):
 
         setup_http_server()
         twitter = Twitter('query', 'my-token', max_items=2)
-        tweets = [tweets for tweets in twitter.fetch()]
+        tweets = list(twitter.fetch())
 
         tweet = tweets[0]
         hashtags = [h['text'] for h in tweet['data']['entities'].get('hashtags', [])]
@@ -203,7 +205,7 @@ class TestTwitterBackend(unittest.TestCase):
         setup_http_server(no_tweets=True)
 
         twitter = Twitter('query', 'my-token', max_items=2)
-        tweets = [tweets for tweets in twitter.fetch()]
+        tweets = list(twitter.fetch())
 
         self.assertEqual(tweets, [])
 
@@ -268,7 +270,7 @@ class TestTwitterClient(unittest.TestCase):
 
         client = TwitterClient("aaa", max_items=2)
         group_tweets = client.tweets("query")
-        group_tweets = [tweets for tweets in group_tweets]
+        group_tweets = list(group_tweets)
 
         self.assertEqual(len(group_tweets), 2)
 
@@ -294,7 +296,7 @@ class TestTwitterClient(unittest.TestCase):
         group_tweets = client.tweets("query", since_id=1, max_id=1005163131042193407,
                                      geocode="37.781157 -122.398720 1km", lang="eu",
                                      include_entities=False, result_type=TWEET_TYPE_POPULAR)
-        group_tweets = [tweets for tweets in group_tweets]
+        group_tweets = list(group_tweets)
 
         self.assertEqual(len(group_tweets), 2)
 
@@ -336,7 +338,7 @@ class TestTwitterClient(unittest.TestCase):
                                      min_rate_to_sleep=100,
                                      sleep_for_rate=True)
         before = float(time.time())
-        _ = [tweets for tweets in client.tweets('query')]
+        _ = list(client.tweets('query'))
         after = float(time.time())
         diff = after - before
 
@@ -350,11 +352,13 @@ class TestTwitterClient(unittest.TestCase):
 
         client = TwitterClient("aaa", max_items=2, sleep_time=0.1)
         start = float(time.time())
-        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
+        expected = start + sum(
+            i * client.sleep_time for i in range(client.MAX_RETRIES)
+        )
 
         events = client.tweets('query')
         with self.assertRaises(requests.exceptions.RetryError):
-            _ = [event for event in events]
+            _ = list(events)
 
         end = float(time.time())
         self.assertGreater(end, expected)
@@ -369,7 +373,7 @@ class TestTwitterClient(unittest.TestCase):
         client = MockedTwitterClient('aaaa', max_items=2,
                                      min_rate_to_sleep=100)
         with self.assertRaises(RateLimitError):
-            [tweets for tweets in client.tweets('query')]
+            list(client.tweets('query'))
 
     def test_sanitize_for_archive(self):
         """Test whether the sanitize method works properly"""
