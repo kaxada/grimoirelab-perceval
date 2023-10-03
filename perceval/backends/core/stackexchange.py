@@ -100,9 +100,7 @@ class StackExchange(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the questions
@@ -120,9 +118,7 @@ class StackExchange(Backend):
         whole_pages = self.client.get_questions(from_date)
 
         for whole_page in whole_pages:
-            questions = self.parse_questions(whole_page)
-            for question in questions:
-                yield question
+            yield from self.parse_questions(whole_page)
 
     @classmethod
     def has_archiving(cls):
@@ -181,9 +177,7 @@ class StackExchange(Backend):
         :returns: a generator of questions
         """
         raw_questions = json.loads(raw_page)
-        questions = raw_questions['items']
-        for question in questions:
-            yield question
+        yield from raw_questions['items']
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -274,8 +268,7 @@ class StackExchangeClient(HttpClient):
             if data['has_more']:
                 page += 1
 
-                backoff = data.get('backoff', None)
-                if backoff:
+                if backoff := data.get('backoff', None):
                     logger.debug("Expensive query. Wait %s secs to send a new request",
                                  backoff)
                     time.sleep(float(backoff))
@@ -326,12 +319,10 @@ class StackExchangeClient(HttpClient):
 
     def __log_status(self, quota_remaining, quota_max, page_size, total):
 
-        logger.debug("Rate limit: %s/%s" % (quota_remaining,
-                                            quota_max))
+        logger.debug(f"Rate limit: {quota_remaining}/{quota_max}")
         if (total != 0):
             nquestions = min(page_size, total)
-            logger.info("Fetching questions: %s/%s" % (nquestions,
-                                                       total))
+            logger.info(f"Fetching questions: {nquestions}/{total}")
         else:
             logger.info("No questions were found.")
 

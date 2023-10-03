@@ -86,7 +86,7 @@ class TestGitBackend(TestCaseGit):
         fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
 
         for repo_name, repo_path in repos:
-            tar_path = os.path.join(data_path, repo_name + '.tar.gz')
+            tar_path = os.path.join(data_path, f'{repo_name}.tar.gz')
             subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
 
             origin_path = os.path.join(cls.tmp_repo_path, repo_name)
@@ -135,8 +135,8 @@ class TestGitBackend(TestCaseGit):
         top = Git(self.git_top_submodules_path, new_path_top)
         sub = Git(self.git_submodules_path, new_path_sub)
 
-        t_commits = [commit for commit in top.fetch()]
-        s_commits = [commit for commit in sub.fetch()]
+        t_commits = list(top.fetch())
+        s_commits = list(sub.fetch())
 
         self.assertEqual(len(t_commits), 9)
         self.assertEqual(len(s_commits), 10)
@@ -150,7 +150,7 @@ class TestGitBackend(TestCaseGit):
         new_path = os.path.join(self.tmp_path, 'newgit')
 
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch()]
+        commits = list(git.fetch())
 
         expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
                     ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 1344965535.0),
@@ -182,7 +182,7 @@ class TestGitBackend(TestCaseGit):
         new_path = os.path.join(self.tmp_path, 'newgit')
 
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch()]
+        commits = list(git.fetch())
 
         for commit in commits:
             self.assertEqual(git.metadata_id(commit['data']), commit['search_fields']['item_id'])
@@ -196,7 +196,7 @@ class TestGitBackend(TestCaseGit):
 
         to_date = datetime.datetime(2014, 2, 11, 22, 7, 49)
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch(to_date=to_date)]
+        commits = list(git.fetch(to_date=to_date))
 
         expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
                     ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 1344965535.0),
@@ -221,7 +221,7 @@ class TestGitBackend(TestCaseGit):
         to_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
                                     tzinfo=dateutil.tz.tzoffset(None, -36000))
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch(to_date=to_date)]
+        commits = list(git.fetch(to_date=to_date))
 
         self.assertEqual(len(commits), len(expected))
 
@@ -244,7 +244,7 @@ class TestGitBackend(TestCaseGit):
 
         from_date = datetime.datetime(2014, 2, 11, 22, 7, 49)
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch(from_date=from_date)]
+        commits = list(git.fetch(from_date=from_date))
 
         expected = [('ce8e0b86a1e9877f42fe9453ede418519115f367', 1392185269.0),
                     ('51a3b654f252210572297f47597b31527c475fb8', 1392185366.0),
@@ -266,7 +266,7 @@ class TestGitBackend(TestCaseGit):
         from_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
                                       tzinfo=dateutil.tz.tzoffset(None, -36000))
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch(from_date=from_date)]
+        commits = list(git.fetch(from_date=from_date))
 
         self.assertEqual(len(commits), len(expected))
 
@@ -289,7 +289,7 @@ class TestGitBackend(TestCaseGit):
         from_date = datetime.datetime(2012, 8, 14, 17, 34, 0)
         to_date = datetime.datetime(2014, 2, 11, 22, 7, 49)
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch(from_date=from_date, to_date=to_date)]
+        commits = list(git.fetch(from_date=from_date, to_date=to_date))
 
         expected = [('c0d66f92a95e31c77be08dc9d0f11a16715d1885', 1344965702.0),
                     ('c6ba8f7a1058db3e6b4bc6f1090e932b107605fb', 1344966351.0),
@@ -313,7 +313,7 @@ class TestGitBackend(TestCaseGit):
         to_date = datetime.datetime(2012, 8, 14, 14, 30, 00,
                                     tzinfo=dateutil.tz.tzoffset(None, -36000))
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch(from_date=from_date, to_date=to_date)]
+        commits = list(git.fetch(from_date=from_date, to_date=to_date))
 
         self.assertEqual(len(commits), len(expected))
 
@@ -337,7 +337,7 @@ class TestGitBackend(TestCaseGit):
         from_date = datetime.datetime(2014, 2, 11, 22, 7, 49)
         git = Git(self.git_path, new_path)
         # Let's fetch master
-        commits = [commit for commit in git.fetch(branches=['master'])]
+        commits = list(git.fetch(branches=['master']))
 
         expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
                     '87783129c3f00d2c81a3a8e585eb86a47e39891a',
@@ -361,7 +361,7 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['tag'], self.git_path)
 
         # Now let's fetch lzp
-        commits = [commit for commit in git.fetch(branches=['lzp'])]
+        commits = list(git.fetch(branches=['lzp']))
 
         expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
                     '87783129c3f00d2c81a3a8e585eb86a47e39891a',
@@ -383,7 +383,7 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['tag'], self.git_path)
 
         # Now, let's fech master and lzp
-        commits = [commit for commit in git.fetch(branches=['master', 'lzp'])]
+        commits = list(git.fetch(branches=['master', 'lzp']))
 
         expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
                     '87783129c3f00d2c81a3a8e585eb86a47e39891a',
@@ -407,7 +407,7 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['tag'], self.git_path)
 
         # Now, let's fetch None, which means "all commits"
-        commits = [commit for commit in git.fetch(branches=None)]
+        commits = list(git.fetch(branches=None))
 
         expected = ['bc57a9209f096a130dcc5ba7089a8663f758a703',
                     '87783129c3f00d2c81a3a8e585eb86a47e39891a',
@@ -431,7 +431,7 @@ class TestGitBackend(TestCaseGit):
             self.assertEqual(commit['tag'], self.git_path)
 
         # Now, let's fetch [], which means "no commits"
-        commits = [commit for commit in git.fetch(branches=[])]
+        commits = list(git.fetch(branches=[]))
 
         expected = []
 
@@ -446,13 +446,13 @@ class TestGitBackend(TestCaseGit):
 
         from_date = datetime.datetime(2020, 1, 1, 1, 1, 1)
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch(from_date=from_date)]
+        commits = list(git.fetch(from_date=from_date))
 
         self.assertListEqual(commits, [])
 
         to_date = datetime.datetime(1970, 1, 1, 1, 1, 1)
         git = Git(self.git_path, new_path)
-        commits = [commit for commit in git.fetch(to_date=to_date)]
+        commits = list(git.fetch(to_date=to_date))
 
         self.assertListEqual(commits, [])
 
@@ -464,7 +464,7 @@ class TestGitBackend(TestCaseGit):
         new_path = os.path.join(self.tmp_path, 'newgit')
 
         git = Git(self.git_detached_path, new_path)
-        commits = [commit for commit in git.fetch()]
+        commits = list(git.fetch())
 
         expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
                     ('87783129c3f00d2c81a3a8e585eb86a47e39891a', 1344965535.0),
@@ -496,7 +496,7 @@ class TestGitBackend(TestCaseGit):
         new_path = os.path.join(self.tmp_path, 'newgit')
 
         git = Git(self.git_empty_path, new_path)
-        commits = [commit for commit in git.fetch()]
+        commits = list(git.fetch())
 
         self.assertListEqual(commits, [])
 
@@ -513,7 +513,7 @@ class TestGitBackend(TestCaseGit):
         shutil.copytree(origin_path, editable_path)
 
         git = Git(editable_path, new_path)
-        commits = [commit for commit in git.fetch(latest_items=True)]
+        commits = list(git.fetch(latest_items=True))
 
         # Count the number of commits before adding some new
         expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
@@ -567,7 +567,7 @@ class TestGitBackend(TestCaseGit):
                                 cwd=editable_path, env={'LANG': 'C'})
 
         # Two new commits should have been fetched
-        commits = [commit for commit in git.fetch(latest_items=True)]
+        commits = list(git.fetch(latest_items=True))
         self.assertEqual(len(commits), 2)
 
         # Remove 'lzp' branch and check that the number of new commits is 0
@@ -575,7 +575,7 @@ class TestGitBackend(TestCaseGit):
         subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                 cwd=editable_path, env={'LANG': 'C'})
 
-        commits = [commit for commit in git.fetch(latest_items=True)]
+        commits = list(git.fetch(latest_items=True))
         self.assertEqual(len(commits), 0)
 
         # Cleanup
@@ -590,12 +590,12 @@ class TestGitBackend(TestCaseGit):
         git = Git(self.git_empty_path, new_path)
 
         # First time, latest items are fetched using 'git log'
-        commits = [commit for commit in git.fetch(latest_items=True)]
+        commits = list(git.fetch(latest_items=True))
         self.assertListEqual(commits, [])
 
         # Further times, latest items are fetched using 'git fetch-pack'
         # and 'git show'
-        commits = [commit for commit in git.fetch(latest_items=True)]
+        commits = list(git.fetch(latest_items=True))
         self.assertListEqual(commits, [])
 
         shutil.rmtree(new_path)
@@ -611,7 +611,7 @@ class TestGitBackend(TestCaseGit):
         shutil.copytree(origin_path, editable_path)
 
         git = Git(editable_path, new_path)
-        commits = [commit for commit in git.fetch()]
+        commits = list(git.fetch())
 
         # Count the number of commits before adding some new
         expected = [('bc57a9209f096a130dcc5ba7089a8663f758a703', 1344965413.0),
@@ -665,10 +665,10 @@ class TestGitBackend(TestCaseGit):
                                 cwd=editable_path, env={'LANG': 'C'})
 
         # Two new commits are added to the repo but are not fetched
-        commits = [commit for commit in git.fetch(no_update=True)]
+        commits = list(git.fetch(no_update=True))
         self.assertEqual(len(commits), 9)
 
-        commits = [commit for commit in git.fetch()]
+        commits = list(git.fetch())
         self.assertEqual(len(commits), 11)
 
         # Cleanup
@@ -679,7 +679,7 @@ class TestGitBackend(TestCaseGit):
         """Test whether commits are fetched from a Git log file"""
 
         git = Git('http://example.com.git', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/git/git_log.txt'))
-        commits = [commit for commit in git.fetch()]
+        commits = list(git.fetch())
 
         expected = [('456a68ee1407a77f3e804a30dff245bb6c6b872f', 1392185439.0),
                     ('51a3b654f252210572297f47597b31527c475fb8', 1392185366.0),
@@ -729,7 +729,7 @@ class TestGitBackend(TestCaseGit):
 
         commits = Git.parse_git_log_from_file(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                            "data/git/git_bad_encoding.txt"))
-        result = [commit for commit in commits]
+        result = list(commits)
 
         self.assertEqual(len(result), 1)
 
@@ -750,7 +750,7 @@ class TestGitBackend(TestCaseGit):
         """
         commits = Git.parse_git_log_from_file(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                            "data/git/git_bad_cr.txt"))
-        result = [commit for commit in commits]
+        result = list(commits)
         self.assertEqual(len(result), 1)
 
     def test_git_parser_from_iter(self):
@@ -892,7 +892,7 @@ class TestGitParser(TestCaseGit):
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log.txt"), 'r') as f:
             parser = GitParser(f)
-            commits = [commit for commit in parser.parse()]
+            commits = list(parser.parse())
 
         self.assertEqual(len(commits), 10)
 
@@ -990,7 +990,7 @@ class TestGitParser(TestCaseGit):
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log_merge.txt"), 'r') as f:
             parser = GitParser(f)
-            commits = [commit for commit in parser.parse()]
+            commits = list(parser.parse())
 
         self.assertEqual(len(commits), 2)
 
@@ -1058,7 +1058,7 @@ class TestGitParser(TestCaseGit):
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log_trailers.txt"), 'r') as f:
             parser = GitParser(f)
-            commits = [commit for commit in parser.parse()]
+            commits = list(parser.parse())
 
         self.assertEqual(len(commits), 3)
 
@@ -1098,7 +1098,7 @@ class TestGitParser(TestCaseGit):
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/git/git_log_empty.txt"), 'r') as f:
             parser = GitParser(f)
-            commits = [commit for commit in parser.parse()]
+            commits = list(parser.parse())
 
         self.assertListEqual(commits, [])
 
@@ -1285,7 +1285,7 @@ class TestGitRepository(TestCaseGit):
         fdout, _ = tempfile.mkstemp(dir=cls.tmp_path)
 
         for repo_name, repo_path in repos:
-            tar_path = os.path.join(data_path, repo_name + '.tar.gz')
+            tar_path = os.path.join(data_path, f'{repo_name}.tar.gz')
             subprocess.check_call(['tar', '-xzf', tar_path, '-C', cls.tmp_repo_path])
 
             origin_path = os.path.join(cls.tmp_repo_path, repo_name)
@@ -1319,8 +1319,7 @@ class TestGitRepository(TestCaseGit):
     def test_not_existing_repo_on_init(self):
         """Test if init fails when the repos does not exists"""
 
-        expected = "directory '%s' is not a Git mirror of repository '%s'" \
-            % (self.tmp_path, 'http://example.org')
+        expected = f"directory '{self.tmp_path}' is not a Git mirror of repository 'http://example.org'"
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository('http://example.org', self.tmp_path)
@@ -1356,8 +1355,7 @@ class TestGitRepository(TestCaseGit):
 
         new_path = os.path.join(self.tmp_path, 'falsegit')
 
-        expected = "directory '%s' for Git repository '%s' does not exist" \
-            % (new_path, '')
+        expected = f"directory '{new_path}' for Git repository '' does not exist"
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository(uri="", dirpath=new_path)
@@ -1365,8 +1363,7 @@ class TestGitRepository(TestCaseGit):
         if not os.path.isdir(new_path):
             os.makedirs(new_path)
 
-        expected = "directory '%s' is not a Git mirror of repository '%s'" \
-            % (new_path, '')
+        expected = f"directory '{new_path}' is not a Git mirror of repository ''"
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository(uri="", dirpath=new_path)
@@ -1379,8 +1376,7 @@ class TestGitRepository(TestCaseGit):
         # Clone a non-git repository
         new_path = os.path.join(self.tmp_path, 'newgit')
 
-        expected = "git command - fatal: repository '%s' does not exist" \
-            % self.tmp_path
+        expected = f"git command - fatal: repository '{self.tmp_path}' does not exist"
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository.clone(self.tmp_path, new_path)
@@ -1388,8 +1384,7 @@ class TestGitRepository(TestCaseGit):
     def test_clone_existing_directory(self):
         """Test if it raises an exception when tries to clone an existing directory"""
 
-        expected = "git command - fatal: destination path '%s' already exists" \
-            % (self.tmp_path)
+        expected = f"git command - fatal: destination path '{self.tmp_path}' already exists"
 
         with self.assertRaisesRegex(RepositoryError, expected):
             _ = GitRepository.clone(self.git_path, self.tmp_path)
@@ -1568,8 +1563,7 @@ class TestGitRepository(TestCaseGit):
             'refs/heads/master',
             'refs/heads/mybranch'
         ]
-        refs = [ref for ref in discover_refs(new_path).keys()]
-        refs.sort()
+        refs = sorted(discover_refs(new_path).keys())
         self.assertListEqual(refs, expected)
 
         # Remove 'lzp' branch and check the number of commits and refs
@@ -1586,8 +1580,7 @@ class TestGitRepository(TestCaseGit):
             'refs/heads/master',
             'refs/heads/mybranch'
         ]
-        refs = [ref for ref in discover_refs(new_path).keys()]
-        refs.sort()
+        refs = sorted(discover_refs(new_path).keys())
         self.assertListEqual(refs, expected)
 
         # Cleanup
@@ -1624,7 +1617,7 @@ class TestGitRepository(TestCaseGit):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitrev = repo.rev_list()
-        gitrev = [line for line in gitrev]
+        gitrev = list(gitrev)
 
         expected = ['456a68ee1407a77f3e804a30dff245bb6c6b872f',
                     '51a3b654f252210572297f47597b31527c475fb8',
@@ -1650,7 +1643,7 @@ class TestGitRepository(TestCaseGit):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitrev = repo.rev_list(branches=['lzp'])
-        gitrev = [line for line in gitrev]
+        gitrev = list(gitrev)
 
         expected = ['51a3b654f252210572297f47597b31527c475fb8',
                     '589bb080f059834829a2a5955bebfd7c2baa110a',
@@ -1673,7 +1666,7 @@ class TestGitRepository(TestCaseGit):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitrev = repo.rev_list(branches=[])
-        gitrev = [line for line in gitrev]
+        gitrev = list(gitrev)
 
         expected = []
 
@@ -1689,7 +1682,7 @@ class TestGitRepository(TestCaseGit):
         gitrev = repo.rev_list()
 
         with self.assertRaises(EmptyRepositoryError):
-            _ = [line for line in gitrev]
+            _ = list(gitrev)
 
         shutil.rmtree(new_path)
 
@@ -1700,7 +1693,7 @@ class TestGitRepository(TestCaseGit):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitlog = repo.log()
-        gitlog = [line for line in gitlog]
+        gitlog = list(gitlog)
         self.assertEqual(len(gitlog), 108)
         self.assertEqual(gitlog[0][:14], "commit bc57a92")
 
@@ -1713,7 +1706,7 @@ class TestGitRepository(TestCaseGit):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitlog = repo.log(to_date=datetime.datetime(2014, 2, 11, 22, 7, 49))
-        gitlog = [line for line in gitlog]
+        gitlog = list(gitlog)
 
         self.assertEqual(len(gitlog), 71)
         self.assertEqual(gitlog[0][:14], "commit bc57a92")
@@ -1727,7 +1720,7 @@ class TestGitRepository(TestCaseGit):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitlog = repo.log(from_date=datetime.datetime(2014, 2, 11, 22, 7, 49))
-        gitlog = [line for line in gitlog]
+        gitlog = list(gitlog)
 
         self.assertEqual(len(gitlog), 36)
         self.assertEqual(gitlog[0][:14], "commit ce8e0b8")
@@ -1736,7 +1729,7 @@ class TestGitRepository(TestCaseGit):
         from_date = datetime.datetime(2014, 2, 11, 22, 7, 49,
                                       tzinfo=dateutil.tz.tzoffset(None, -36000))
         gitlog = repo.log(from_date=from_date)
-        gitlog = [line for line in gitlog]
+        gitlog = list(gitlog)
 
         self.assertEqual(gitlog, [])
 
@@ -1749,7 +1742,7 @@ class TestGitRepository(TestCaseGit):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitlog = repo.log(from_date=datetime.datetime(2020, 1, 1, 1, 1, 1))
-        gitlog = [line for line in gitlog]
+        gitlog = list(gitlog)
 
         self.assertListEqual(gitlog, [])
 
@@ -1764,7 +1757,7 @@ class TestGitRepository(TestCaseGit):
         gitlog = repo.log()
 
         with self.assertRaises(EmptyRepositoryError):
-            _ = [line for line in gitlog]
+            _ = list(gitlog)
 
         shutil.rmtree(new_path)
 
@@ -1775,7 +1768,7 @@ class TestGitRepository(TestCaseGit):
 
         repo = GitRepository.clone(self.git_path, new_path)
         gitshow = repo.show()
-        gitshow = [line for line in gitshow]
+        gitshow = list(gitshow)
         self.assertEqual(len(gitshow), 14)
         self.assertEqual(gitshow[0][:14], "commit 456a68e")
 
@@ -1789,7 +1782,7 @@ class TestGitRepository(TestCaseGit):
         repo = GitRepository.clone(self.git_path, new_path)
         commits = ['51a3b65', '8778312']
         gitshow = repo.show(commits=commits)
-        gitshow = [line for line in gitshow]
+        gitshow = list(gitshow)
         self.assertEqual(len(gitshow), 21)
         self.assertEqual(gitshow[0][:14], "commit 51a3b65")
         self.assertEqual(gitshow[11][:14], "commit 8778312")
@@ -1797,7 +1790,7 @@ class TestGitRepository(TestCaseGit):
         # When an empty list is given, the output is the
         # data from the last commit
         gitshow = repo.show(commits=[])
-        gitshow = [line for line in gitshow]
+        gitshow = list(gitshow)
         self.assertEqual(len(gitshow), 14)
         self.assertEqual(gitshow[0][:14], "commit 456a68e")
 
@@ -1812,7 +1805,7 @@ class TestGitRepository(TestCaseGit):
         gitshow = repo.show()
 
         with self.assertRaises(EmptyRepositoryError):
-            _ = [line for line in gitshow]
+            _ = list(gitshow)
 
         shutil.rmtree(new_path)
 

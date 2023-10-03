@@ -43,12 +43,14 @@ from perceval.backends.core.phabricator import (DEFAULT_SLEEP_TIME,
 from base import TestCaseBackendArchive
 
 PHABRICATOR_URL = 'http://example.com'
-PHABRICATOR_API_URL = PHABRICATOR_URL + '/api'
-PHABRICATOR_API_ERROR_URL = PHABRICATOR_API_URL + '/error'
-PHABRICATOR_TASKS_URL = PHABRICATOR_API_URL + '/maniphest.search'
-PHABRICATOR_TRANSACTIONS_URL = PHABRICATOR_API_URL + '/maniphest.gettasktransactions'
-PHABRICATOR_PHIDS_URL = PHABRICATOR_API_URL + '/phid.query'
-PHABRICATOR_USERS_URL = PHABRICATOR_API_URL + '/user.query'
+PHABRICATOR_API_URL = f'{PHABRICATOR_URL}/api'
+PHABRICATOR_API_ERROR_URL = f'{PHABRICATOR_API_URL}/error'
+PHABRICATOR_TASKS_URL = f'{PHABRICATOR_API_URL}/maniphest.search'
+PHABRICATOR_TRANSACTIONS_URL = (
+    f'{PHABRICATOR_API_URL}/maniphest.gettasktransactions'
+)
+PHABRICATOR_PHIDS_URL = f'{PHABRICATOR_API_URL}/phid.query'
+PHABRICATOR_USERS_URL = f'{PHABRICATOR_API_URL}/user.query'
 
 
 def read_file(filename, mode='r'):
@@ -107,20 +109,14 @@ def setup_http_server():
             else:
                 body = tasks_next_body
         elif uri == PHABRICATOR_TRANSACTIONS_URL:
-            if 69 in params['ids']:
-                body = tasks_trans_body
-            else:
-                body = tasks_trans_next_body
+            body = tasks_trans_body if 69 in params['ids'] else tasks_trans_next_body
         elif uri == PHABRICATOR_USERS_URL:
             if len(params['phids']) == 4:
                 body = users_body
             else:
                 body = phids_users[params['phids'][0]]
         elif uri == PHABRICATOR_PHIDS_URL:
-            if len(params['phids']) == 2:
-                body = phids_body
-            else:
-                body = phids[params['phids'][0]]
+            body = phids_body if len(params['phids']) == 2 else phids[params['phids'][0]]
         elif uri == PHABRICATOR_API_ERROR_URL:
             body = error_body
         else:
@@ -227,7 +223,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA')
-        tasks = [task for task in phab.fetch(from_date=None)]
+        tasks = list(phab.fetch(from_date=None))
 
         expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
                     (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
@@ -437,7 +433,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         setup_http_server()
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA')
-        tasks = [task for task in phab.fetch(from_date=None)]
+        tasks = list(phab.fetch(from_date=None))
 
         task = tasks[0]
         self.assertEqual(phab.metadata_id(task['data']), task['search_fields']['item_id'])
@@ -460,7 +456,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         from_date = datetime.datetime(2016, 6, 29, 0, 0, 0)
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA')
-        tasks = [task for task in phab.fetch(from_date=from_date)]
+        tasks = list(phab.fetch(from_date=from_date))
 
         self.assertEqual(len(tasks), 1)
 
@@ -565,7 +561,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA', blacklist_ids=[296])
-        tasks = [task for task in phab.fetch(from_date=None)]
+        tasks = list(phab.fetch(from_date=None))
 
         expected = [(69, 16, 'jdoe', 'jdoe', '1b4c15d26068efcae83cd920bcada6003d2c4a6c', 1462306027.0),
                     (73, 20, 'jdoe', 'janesmith', '5487fc704f2d3c4e83ab0cd065512a181c1726cc', 1462464642.0),
@@ -734,7 +730,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         from_date = datetime.datetime(2017, 1, 1, 0, 0, 0)
 
         phab = Phabricator(PHABRICATOR_URL, 'AAAA')
-        tasks = [task for task in phab.fetch(from_date=from_date)]
+        tasks = list(phab.fetch(from_date=from_date))
 
         self.assertEqual(len(tasks), 0)
 
@@ -762,7 +758,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         raw_json = read_file('data/phabricator/phabricator_tasks.json')
 
         tasks = Phabricator.parse_tasks(raw_json)
-        results = [task for task in tasks]
+        results = list(tasks)
 
         self.assertEqual(len(results), 3)
         self.assertEqual(results[0]['id'], 69)
@@ -773,7 +769,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         raw_json = read_file('data/phabricator/phabricator_tasks_empty.json')
 
         tasks = Phabricator.parse_tasks(raw_json)
-        results = [task for task in tasks]
+        results = list(tasks)
 
         self.assertEqual(len(results), 0)
 
@@ -795,7 +791,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         raw_json = read_file('data/phabricator/phabricator_users.json')
 
         users = Phabricator.parse_users(raw_json)
-        results = [user for user in users]
+        results = list(users)
 
         self.assertEqual(len(results), 4)
         self.assertEqual(results[0]['userName'], 'jrae')
@@ -809,7 +805,7 @@ class TestPhabricatorBackend(unittest.TestCase):
         raw_json = read_file('data/phabricator/phabricator_phids.json')
         json_content = json.loads(raw_json)
         phids = Phabricator.parse_phids(json_content)
-        results = [phid for phid in phids]
+        results = list(phids)
         results.sort(key=lambda x: x['fullName'])
 
         self.assertEqual(len(results), 2)
@@ -890,7 +886,7 @@ class TestConduitClient(unittest.TestCase):
         dt = datetime.datetime(2016, 5, 3, 0, 0, 0)
 
         result = client.tasks(from_date=dt)
-        result = [r for r in result]
+        result = list(result)
 
         self.assertEqual(len(result), 2)
 
@@ -1072,7 +1068,7 @@ class TestConduitClient(unittest.TestCase):
 
         # After 5 tries (request + 4 retries) it gets the result
         reqs = []
-        _ = [r for r in client.tasks()]
+        _ = list(client.tasks())
         self.assertEqual(len(reqs), 5)
 
         # After 6 tries (request + 5 retries) it fails

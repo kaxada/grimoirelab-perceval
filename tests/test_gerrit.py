@@ -107,9 +107,7 @@ def mock_check_ouput(*args, **kwargs):
 def mock_check_ouput_version_unknown(*args, **kwargs):
     """Mock subprocess.check_output"""
 
-    data = read_file(VERSION_UNKNOWN, 'rb')
-
-    return data
+    return read_file(VERSION_UNKNOWN, 'rb')
 
 
 def mock_check_ouput_empty_review(*args, **kwargs):
@@ -170,7 +168,7 @@ class TestGerritBackend(unittest.TestCase):
         mock_check_ouput.side_effect = mock_check_ouput
 
         gerrit = Gerrit(GERRIT_REPO, user=GERRIT_USER, port=29418, max_reviews=2)
-        reviews = [review for review in gerrit.fetch(from_date=None)]
+        reviews = list(gerrit.fetch(from_date=None))
 
         self.assertIsNotNone(gerrit.client)
         self.assertEqual(len(reviews), 5)
@@ -212,7 +210,7 @@ class TestGerritBackend(unittest.TestCase):
         mock_check_ouput.side_effect = mock_check_ouput
 
         gerrit = Gerrit(GERRIT_REPO, user=GERRIT_USER, port=29418, max_reviews=2)
-        reviews = [review for review in gerrit.fetch(from_date=None)]
+        reviews = list(gerrit.fetch(from_date=None))
 
         self.assertIsNotNone(gerrit.client)
         self.assertEqual(len(reviews), 5)
@@ -260,7 +258,7 @@ class TestGerritBackend(unittest.TestCase):
 
         gerrit = Gerrit(GERRIT_REPO, user=GERRIT_USER, port=29418, max_reviews=2)
         from_date = datetime.datetime(2018, 3, 5)
-        reviews = [review for review in gerrit.fetch(from_date=from_date)]
+        reviews = list(gerrit.fetch(from_date=from_date))
 
         self.assertIsNotNone(gerrit.client)
         self.assertEqual(len(reviews), 4)

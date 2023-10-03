@@ -105,9 +105,7 @@ class Discourse(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the topics
@@ -224,9 +222,7 @@ class Discourse(Backend):
         # Sort topics by date and in reverse order to fetch them from
         # the oldest to the newest
         candidates = sorted(candidates, key=lambda x: x[1])
-        topics_ids = [topic[0] for topic in candidates]
-
-        return topics_ids
+        return [topic[0] for topic in candidates]
 
     def __fetch_and_parse_topic(self, topic_id):
         logger.debug("Fetching and parsing topic %s", topic_id)
@@ -345,31 +341,21 @@ class DiscourseClient(HttpClient):
             self.PPAGE: page
         }
 
-        # http://example.com/latest.json
-        response = self._call(self.ALL_TOPICS, self.TOPICS_SUMMARY,
-                              params=params)
-
-        return response
+        return self._call(self.ALL_TOPICS, self.TOPICS_SUMMARY, params=params)
 
     def topic(self, topic_id):
         """Retrive the topic with `topic_id` identifier.
 
         :param topic_id: identifier of the topic to retrieve
         """
-        # http://example.com/t/8.json
-        response = self._call(self.TOPIC, topic_id)
-
-        return response
+        return self._call(self.TOPIC, topic_id)
 
     def post(self, post_id):
         """Retrieve the post whit `post_id` identifier.
 
         :param post_id: identifier of the post to retrieve
         """
-        # http://example.com/posts/10.json
-        response = self._call(self.POSTS, post_id)
-
-        return response
+        return self._call(self.POSTS, post_id)
 
     def _set_extra_headers(self):
         """Set extra headers for session"""

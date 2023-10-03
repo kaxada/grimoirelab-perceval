@@ -95,12 +95,10 @@ class Launchpad(Backend):
 
         :returns: a dict of search fields
         """
-        search_fields = {
+        return {
             DEFAULT_SEARCH_FIELD: self.metadata_id(item),
-            'distribution': self.distribution
+            'distribution': self.distribution,
         }
-
-        return search_fields
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME):
         """Fetch the issues from a project (distribution/package).
@@ -119,9 +117,7 @@ class Launchpad(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the issues
@@ -232,10 +228,9 @@ class Launchpad(Backend):
 
                     if field == 'bug_link':
                         issue['bug_data'] = self.__fetch_issue_data(issue_id)
-                        issue['activity_data'] = [activity for activity in self.__fetch_issue_activities(issue_id)]
-                        issue['messages_data'] = [message for message in self.__fetch_issue_messages(issue_id)]
-                        issue['attachments_data'] = [attachment for attachment in
-                                                     self.__fetch_issue_attachments(issue_id)]
+                        issue['activity_data'] = list(self.__fetch_issue_activities(issue_id))
+                        issue['messages_data'] = list(self.__fetch_issue_messages(issue_id))
+                        issue['attachments_data'] = list(self.__fetch_issue_attachments(issue_id))
                     elif field == 'assignee_link':
                         issue['assignee_data'] = self.__fetch_user_data('{ASSIGNEE}', issue[field])
                     elif field == 'owner_link':
@@ -257,8 +252,7 @@ class Launchpad(Backend):
         for attachments_raw in self.client.issue_collection(issue_id, "attachments"):
             attachments = json.loads(attachments_raw)
 
-            for attachment in attachments['entries']:
-                yield attachment
+            yield from attachments['entries']
 
     def __fetch_issue_messages(self, issue_id):
         """Get messages of an issue"""
@@ -285,15 +279,10 @@ class Launchpad(Backend):
 
         user_name = self.client.user_name(user_link)
 
-        user = {}
-
         if not user_name:
-            return user
-
+            return {}
         user_raw = self.client.user(user_name)
-        user = json.loads(user_raw)
-
-        return user
+        return json.loads(user_raw)
 
 
 class LaunchpadClient(HttpClient):
@@ -364,20 +353,19 @@ class LaunchpadClient(HttpClient):
         if user_name in self._users:
             return self._users[user_name]
 
-        url_user = self.__get_url("~" + user_name)
+        url_user = self.__get_url(f"~{user_name}")
 
-        logger.info("Getting info for %s" % (url_user))
+        logger.info(f"Getting info for {url_user}")
 
         try:
             raw_user = self.__send_request(url_user)
             user = raw_user
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code in [404, 410]:
-                logger.warning("Data is not available - %s", url_user)
-                user = '{}'
-            else:
+            if e.response.status_code not in [404, 410]:
                 raise e
 
+            logger.warning("Data is not available - %s", url_user)
+            user = '{}'
         self._users[user_name] = user
 
         return user
@@ -392,9 +380,7 @@ class LaunchpadClient(HttpClient):
 
         path = urijoin(self.RBUGS, str(issue_id))
         url_issue = self.__get_url(path)
-        raw_text = self.__send_request(url_issue)
-
-        return raw_text
+        return self.__send_request(url_issue)
 
     def issue_collection(self, issue_id, collection_name):
         """Get a collection list of a given issue"""
@@ -403,19 +389,16 @@ class LaunchpadClient(HttpClient):
         url_collection = self.__get_url(path)
         payload = {self.PWS_SIZE: self.items_per_page, self.PWS_START: 0, self.PORDER_BY: self.VDATE_LAST_MODIFIED}
 
-        raw_items = self.__fetch_items(path=url_collection, payload=payload)
-
-        return raw_items
+        return self.__fetch_items(path=url_collection, payload=payload)
 
     def __get_url_project(self):
         """Build URL project"""
 
-        if self.package:
-            url = self.__get_url_distribution_package()
-        else:
-            url = self.__get_url_distribution()
-
-        return url
+        return (
+            self.__get_url_distribution_package()
+            if self.package
+            else self.__get_url_distribution()
+        )
 
     def __get_url_distribution(self):
         """Build URL distribution"""
@@ -435,9 +418,7 @@ class LaunchpadClient(HttpClient):
     def __define_headers(self):
         """Add headers to the Client default ones"""
 
-        headers = {self.HCONTENT_TYPE: self.VCONTENT_TYPE}
-
-        return headers
+        return {self.HCONTENT_TYPE: self.VCONTENT_TYPE}
 
     def __send_request(self, url, params=None):
         """Send request"""
@@ -477,13 +458,12 @@ class LaunchpadClient(HttpClient):
                 raw_content = self.__send_request(url_next, payload)
                 content = json.loads(raw_content)
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code in [410]:
-                    logger.warning("Data is not available - %s", url_next)
-                    raw_content = '{"total_size": 0, "start": 0, "entries": []}'
-                    content = json.loads(raw_content)
-                else:
+                if e.response.status_code not in [410]:
                     raise e
 
+                logger.warning("Data is not available - %s", url_next)
+                raw_content = '{"total_size": 0, "start": 0, "entries": []}'
+                content = json.loads(raw_content)
             if 'next_collection_link' in content:
                 url_next = content['next_collection_link']
                 payload = None

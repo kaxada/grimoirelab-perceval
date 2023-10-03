@@ -92,9 +92,7 @@ class Supybot(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
@@ -200,14 +198,13 @@ class Supybot(Backend):
             given file
         """
         with open(filepath, 'r', errors='surrogateescape',
-                  newline=os.linesep) as f:
+                      newline=os.linesep) as f:
             parser = SupybotParser(f)
 
             try:
-                for message in parser.parse():
-                    yield message
+                yield from parser.parse()
             except ParseError as e:
-                cause = "file: %s; reason: %s" % (filepath, str(e))
+                cause = f"file: {filepath}; reason: {str(e)}"
                 raise ParseError(cause=cause)
 
     def _init_client(self, from_archive=False):
@@ -373,9 +370,7 @@ class SupybotParser:
                 continue
 
             itype, nick, body = self._parse_supybot_msg(msg)
-            item = self._build_item(ts, itype, nick, body)
-
-            yield item
+            yield self._build_item(ts, itype, nick, body)
 
     def _parse_supybot_timestamp(self, line):
         """Parse timestamp section"""
@@ -383,7 +378,7 @@ class SupybotParser:
         m = self.SUPYBOT_TIMESTAMP_REGEX.match(line)
 
         if not m:
-            msg = "date expected on line %s" % (str(self.nline))
+            msg = f"date expected on line {str(self.nline)}"
             raise ParseError(cause=msg)
 
         ts = m.group('ts')
@@ -400,12 +395,10 @@ class SupybotParser:
                     (self.SUPYBOT_BOT_REGEX, self.TCOMMENT)]
 
         for p in patterns:
-            m = p[0].match(line)
-            if not m:
-                continue
-            return p[1], m.group('nick'), m.group('body').strip()
+            if m := p[0].match(line):
+                return p[1], m.group('nick'), m.group('body').strip()
 
-        msg = "invalid message on line %s" % (str(self.nline))
+        msg = f"invalid message on line {str(self.nline)}"
         raise ParseError(cause=msg)
 
     def _build_item(self, ts, itype, nick, body):

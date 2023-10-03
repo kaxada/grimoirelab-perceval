@@ -37,7 +37,9 @@ from base import TestCaseBackendArchive
 
 TELEGRAM_BOT = 'mybot'
 TELEGRAM_TOKEN = '12345678'
-TELEGRAM_UPDATES_URL = 'https://api.telegram.org/bot' + TELEGRAM_TOKEN + '/getUpdates'
+TELEGRAM_UPDATES_URL = (
+    f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates'
+)
 
 
 def read_file(filename, mode='r'):
@@ -84,7 +86,7 @@ class TestTelegramBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        origin = 'https://telegram.org/' + TELEGRAM_BOT
+        origin = f'https://telegram.org/{TELEGRAM_BOT}'
 
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN,
                        tag='test')
@@ -125,7 +127,7 @@ class TestTelegramBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
-        messages = [msg for msg in tlg.fetch(offset=None)]
+        messages = list(tlg.fetch(offset=None))
 
         expected = [
             (31, '5a5457aec04237ac3fab30031e84c745a3bdd157', 1467289325.0, 319280318),
@@ -141,12 +143,12 @@ class TestTelegramBackend(unittest.TestCase):
         for x in range(len(messages)):
             message = messages[x]
             self.assertEqual(message['data']['message']['message_id'], expected[x][0])
-            self.assertEqual(message['origin'], 'https://telegram.org/' + TELEGRAM_BOT)
+            self.assertEqual(message['origin'], f'https://telegram.org/{TELEGRAM_BOT}')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
-            self.assertEqual(message['tag'], 'https://telegram.org/' + TELEGRAM_BOT)
+            self.assertEqual(message['tag'], f'https://telegram.org/{TELEGRAM_BOT}')
 
         # check that the only the message is marked as edited
         message = messages[0]
@@ -186,7 +188,7 @@ class TestTelegramBackend(unittest.TestCase):
         setup_http_server()
 
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
-        messages = [msg for msg in tlg.fetch(offset=None)]
+        messages = list(tlg.fetch(offset=None))
 
         message = messages[0]
         self.assertEqual(tlg.metadata_id(message['data']), message['search_fields']['item_id'])
@@ -222,7 +224,7 @@ class TestTelegramBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
-        messages = [msg for msg in tlg.fetch(offset=319280321)]
+        messages = list(tlg.fetch(offset=319280321))
 
         expected = [
             (34, '2e61e72b64c9084f3c5a36671c3119641c3ae42f', 1467370372.0, 319280321),
@@ -235,12 +237,12 @@ class TestTelegramBackend(unittest.TestCase):
         for x in range(len(messages)):
             message = messages[x]
             self.assertEqual(message['data']['message']['message_id'], expected[x][0])
-            self.assertEqual(message['origin'], 'https://telegram.org/' + TELEGRAM_BOT)
+            self.assertEqual(message['origin'], f'https://telegram.org/{TELEGRAM_BOT}')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
-            self.assertEqual(message['tag'], 'https://telegram.org/' + TELEGRAM_BOT)
+            self.assertEqual(message['tag'], f'https://telegram.org/{TELEGRAM_BOT}')
 
         # Check requests
         expected = [
@@ -262,7 +264,7 @@ class TestTelegramBackend(unittest.TestCase):
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
 
         chats = [8, -1]
-        messages = [msg for msg in tlg.fetch(chats=chats)]
+        messages = list(tlg.fetch(chats=chats))
 
         self.assertEqual(len(messages), 3)
 
@@ -273,16 +275,16 @@ class TestTelegramBackend(unittest.TestCase):
         for x in range(len(messages)):
             message = messages[x]
             self.assertEqual(message['data']['message']['message_id'], expected[x][0])
-            self.assertEqual(message['origin'], 'https://telegram.org/' + TELEGRAM_BOT)
+            self.assertEqual(message['origin'], f'https://telegram.org/{TELEGRAM_BOT}')
             self.assertEqual(message['uuid'], expected[x][1])
             self.assertEqual(message['updated_on'], expected[x][2])
             self.assertEqual(message['offset'], expected[x][3])
             self.assertEqual(message['category'], 'message')
-            self.assertEqual(message['tag'], 'https://telegram.org/' + TELEGRAM_BOT)
+            self.assertEqual(message['tag'], f'https://telegram.org/{TELEGRAM_BOT}')
 
         # Empty list of chats will return no messages
         chats = []
-        messages = [msg for msg in tlg.fetch(chats=chats)]
+        messages = list(tlg.fetch(chats=chats))
 
         self.assertEqual(len(messages), 0)
 
@@ -293,7 +295,7 @@ class TestTelegramBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         tlg = Telegram(TELEGRAM_BOT, TELEGRAM_TOKEN)
-        messages = [msg for msg in tlg.fetch(offset=319280324)]
+        messages = list(tlg.fetch(offset=319280324))
 
         self.assertEqual(len(messages), 0)
 
@@ -310,7 +312,7 @@ class TestTelegramBackend(unittest.TestCase):
         body_msgs_empty = read_file('data/telegram/telegram_messages_empty.json')
 
         messages = Telegram.parse_messages(body_msgs)
-        result = [msg for msg in messages]
+        result = list(messages)
 
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0]['message']['message_id'], 31)
@@ -318,7 +320,7 @@ class TestTelegramBackend(unittest.TestCase):
         self.assertEqual(result[2]['message']['message_id'], 33)
 
         messages = Telegram.parse_messages(body_msgs_empty)
-        result = [msg for msg in messages]
+        result = list(messages)
 
         self.assertEqual(len(result), 0)
 

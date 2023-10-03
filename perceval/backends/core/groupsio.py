@@ -108,9 +108,7 @@ class Groupsio(MBox):
 
         :returns: a generator of messages
         """
-        items = super().fetch(category, from_date)
-
-        return items
+        return super().fetch(category, from_date)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
@@ -129,11 +127,7 @@ class Groupsio(MBox):
                                       self.email, self.password, self.ssl_verify)
         mailing_list.fetch(from_date)
 
-        messages = self._fetch_and_parse_messages(mailing_list, from_date)
-
-        for message in messages:
-            yield message
-
+        yield from self._fetch_and_parse_messages(mailing_list, from_date)
         logger.info("Fetch process completed")
 
     @classmethod
@@ -212,7 +206,7 @@ class GroupsioClient(MailingList):
         group_id, group_download_archive = self.__find_group_info()
 
         if not group_download_archive:
-            msg = "Download archive permission disabled for the group %s" % self.group_name
+            msg = f"Download archive permission disabled for the group {self.group_name}"
             logger.error(msg)
             raise BackendError(cause=msg)
 
@@ -225,9 +219,7 @@ class GroupsioClient(MailingList):
             payload[self.PSTART_TIME] = datetime_to_utc(from_date).isoformat()
 
         filepath = os.path.join(self.dirpath, MBOX_FILE)
-        success = self._download_archive(url, payload, filepath)
-
-        return success
+        return self._download_archive(url, payload, filepath)
 
     def subscriptions(self, per_page=PER_PAGE):
         """Fetch the groupsio paginated subscriptions for a given token
@@ -237,7 +229,7 @@ class GroupsioClient(MailingList):
         :returns: an iterator of subscriptions
         """
         url = urijoin(GROUPSIO_API_URL, self.RGET_SUBSCRIPTIONS)
-        logger.debug("Get groupsio paginated subscriptions from " + url)
+        logger.debug(f"Get groupsio paginated subscriptions from {url}")
 
         keep_fetching = True
         payload = {
@@ -247,9 +239,7 @@ class GroupsioClient(MailingList):
         while keep_fetching:
             r = self.__fetch(url, payload)
             response_raw = r.json()
-            subscriptions = response_raw['data']
-            yield subscriptions
-
+            yield response_raw['data']
             total_subscriptions = response_raw['total_count']
             logger.debug("Subscriptions: %i/%i" % (response_raw['end_item'], total_subscriptions))
 
@@ -289,7 +279,7 @@ class GroupsioClient(MailingList):
                 if sub['group_name'] == self.group_name:
                     return sub['group_id'], sub['perms']['download_archives']
 
-        msg = "Group id not found for group name %s" % self.group_name
+        msg = f"Group id not found for group name {self.group_name}"
         raise BackendError(cause=msg)
 
     def __fetch(self, url, payload):

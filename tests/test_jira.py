@@ -46,11 +46,11 @@ from base import TestCaseBackendArchive
 
 
 JIRA_SERVER_URL = 'http://example.com'
-JIRA_SEARCH_URL = JIRA_SERVER_URL + '/rest/api/2/search'
-JIRA_FIELDS_URL = JIRA_SERVER_URL + '/rest/api/2/field'
-JIRA_ISSUE_1_COMMENTS_URL = JIRA_SERVER_URL + '/rest/api/2/issue/1/comment'
-JIRA_ISSUE_2_COMMENTS_URL = JIRA_SERVER_URL + '/rest/api/2/issue/2/comment'
-JIRA_ISSUE_3_COMMENTS_URL = JIRA_SERVER_URL + '/rest/api/2/issue/3/comment'
+JIRA_SEARCH_URL = f'{JIRA_SERVER_URL}/rest/api/2/search'
+JIRA_FIELDS_URL = f'{JIRA_SERVER_URL}/rest/api/2/field'
+JIRA_ISSUE_1_COMMENTS_URL = f'{JIRA_SERVER_URL}/rest/api/2/issue/1/comment'
+JIRA_ISSUE_2_COMMENTS_URL = f'{JIRA_SERVER_URL}/rest/api/2/issue/2/comment'
+JIRA_ISSUE_3_COMMENTS_URL = f'{JIRA_SERVER_URL}/rest/api/2/issue/3/comment'
 
 
 def read_file(filename, mode='r'):
@@ -216,7 +216,7 @@ class TestJiraBackend(unittest.TestCase):
 
         jira = Jira(JIRA_SERVER_URL)
 
-        issues = [issue for issue in jira.fetch()]
+        issues = list(jira.fetch())
 
         body_json = json.loads(body)
 
@@ -373,7 +373,7 @@ class TestJiraBackend(unittest.TestCase):
                                body=body, status=200)
 
         jira = Jira(JIRA_SERVER_URL)
-        issues = [issue for issue in jira.fetch()]
+        issues = list(jira.fetch())
 
         issue = issues[0]
         self.assertEqual(issue['origin'], 'http://example.com')
@@ -449,7 +449,7 @@ class TestJiraBackend(unittest.TestCase):
 
         jira = Jira(JIRA_SERVER_URL)
 
-        issues = [issue for issue in jira.fetch(from_date=from_date)]
+        issues = list(jira.fetch(from_date=from_date))
 
         self.assertEqual(len(issues), 1)
 
@@ -503,7 +503,7 @@ class TestJiraBackend(unittest.TestCase):
 
         jira = Jira(JIRA_SERVER_URL)
 
-        issues = [issue for issue in jira.fetch()]
+        issues = list(jira.fetch())
 
         expected_req = {
             'expand': ['renderedFields,transitions,operations,changelog'],
@@ -629,7 +629,7 @@ class TestJiraBackendParsers(unittest.TestCase):
 
         issues = Jira.parse_issues(raw_parse_json)
 
-        result = [issue for issue in issues]
+        result = list(issues)
 
         parse = json.loads(parse_json)
 
@@ -710,7 +710,7 @@ class TestJiraClient(unittest.TestCase):
                             user='user', password='password',
                             ssl_verify=False, cert=None, max_results=2)
 
-        pages = [page for page in client.get_issues(from_date)]
+        pages = list(client.get_issues(from_date))
 
         expected_req = [
             {
@@ -763,7 +763,7 @@ class TestJiraClient(unittest.TestCase):
                             user='user', password='password',
                             ssl_verify=False, cert=None, max_results=2)
 
-        pages = [page for page in client.get_comments("1")]
+        pages = list(client.get_comments("1"))
 
         expected_req = [
             {
@@ -831,7 +831,7 @@ class TestJiraClient(unittest.TestCase):
                             user='user', password='password',
                             ssl_verify=False, cert=None, max_results=1)
 
-        pages = [page for page in client.get_issues(from_date)]
+        pages = list(client.get_issues(from_date))
 
         expected_req = {
             'expand': ['renderedFields,transitions,operations,changelog'],

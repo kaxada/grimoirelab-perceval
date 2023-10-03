@@ -46,24 +46,36 @@ from base import TestCaseBackendArchive
 USER = 'user01'
 TOKEN = 'token01'
 SERVER_URL = 'http://example.com/ci'
-JOBS_URL = SERVER_URL + '/api/json'
+JOBS_URL = f'{SERVER_URL}/api/json'
 JOB_BUILDS_1 = 'apex-build-brahmaputra'
 JOB_BUILDS_2 = 'apex-build-master'
 JOB_BUILDS_3 = 'zowe-docs-site'
 JOB_WORKFLOW = 'zowe-workflow'
 JOB_BUILDS_500_ERROR = '500-error-job'
 JOB_BUILDS_JSON_ERROR = 'invalid-json-job'
-JOB_BUILDS_URL_1_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_1 + '/api/json?depth=1'
-JOB_BUILDS_URL_2_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_2 + '/api/json?depth=1'
-JOB_WORKFLOW_URL = SERVER_URL + '/job/' + JOB_BUILDS_3 + '/api/json'
-JOB_WORKFLOW_BUILDS_URL_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_3 + '/job/' + JOB_WORKFLOW + '/api/json?depth=1'
-JOB_BUILDS_URL_500_ERROR_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_500_ERROR + '/api/json?depth=1'
-JOB_BUILDS_URL_JSON_ERROR_DEPTH_1 = SERVER_URL + '/job/' + JOB_BUILDS_JSON_ERROR + '/api/json?depth1'
-JOB_BUILDS_URL_1_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_1 + '/api/json?depth=2'
-JOB_BUILDS_URL_2_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_2 + '/api/json?depth=2'
-JOB_BUILDS_URL_500_ERROR_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_500_ERROR + '/api/json?depth=2'
-JOB_BUILDS_URL_JSON_ERROR_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_JSON_ERROR + '/api/json?depth=2'
-JOB_WORKFLOW_BUILDS_URL_DEPTH_2 = SERVER_URL + '/job/' + JOB_BUILDS_3 + '/job/' + JOB_WORKFLOW + '/api/json?depth=2'
+JOB_BUILDS_URL_1_DEPTH_1 = f'{SERVER_URL}/job/{JOB_BUILDS_1}/api/json?depth=1'
+JOB_BUILDS_URL_2_DEPTH_1 = f'{SERVER_URL}/job/{JOB_BUILDS_2}/api/json?depth=1'
+JOB_WORKFLOW_URL = f'{SERVER_URL}/job/{JOB_BUILDS_3}/api/json'
+JOB_WORKFLOW_BUILDS_URL_DEPTH_1 = (
+    f'{SERVER_URL}/job/{JOB_BUILDS_3}/job/{JOB_WORKFLOW}/api/json?depth=1'
+)
+JOB_BUILDS_URL_500_ERROR_DEPTH_1 = (
+    f'{SERVER_URL}/job/{JOB_BUILDS_500_ERROR}/api/json?depth=1'
+)
+JOB_BUILDS_URL_JSON_ERROR_DEPTH_1 = (
+    f'{SERVER_URL}/job/{JOB_BUILDS_JSON_ERROR}/api/json?depth1'
+)
+JOB_BUILDS_URL_1_DEPTH_2 = f'{SERVER_URL}/job/{JOB_BUILDS_1}/api/json?depth=2'
+JOB_BUILDS_URL_2_DEPTH_2 = f'{SERVER_URL}/job/{JOB_BUILDS_2}/api/json?depth=2'
+JOB_BUILDS_URL_500_ERROR_DEPTH_2 = (
+    f'{SERVER_URL}/job/{JOB_BUILDS_500_ERROR}/api/json?depth=2'
+)
+JOB_BUILDS_URL_JSON_ERROR_DEPTH_2 = (
+    f'{SERVER_URL}/job/{JOB_BUILDS_JSON_ERROR}/api/json?depth=2'
+)
+JOB_WORKFLOW_BUILDS_URL_DEPTH_2 = (
+    f'{SERVER_URL}/job/{JOB_BUILDS_3}/job/{JOB_WORKFLOW}/api/json?depth=2'
+)
 
 
 requests_http = []
@@ -289,7 +301,7 @@ class TestJenkinsBackend(unittest.TestCase):
         jenkins = Jenkins(SERVER_URL)
 
         with self.assertLogs(logger, level='WARNING') as cm:
-            builds = [build for build in jenkins.fetch()]
+            builds = list(jenkins.fetch())
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
                                            'Internal Server Error for url: '
                                            'http://example.com/ci/job/500-error-job/api/json?depth=1')
@@ -304,7 +316,7 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(jenkins.summary.skipped, 2)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
-                as build_json:
+                    as build_json:
             first_build = json.load(build_json)
             self.assertDictEqual(builds[0]['data'], first_build['data'])
 
@@ -348,7 +360,7 @@ class TestJenkinsBackend(unittest.TestCase):
         jenkins = Jenkins(SERVER_URL)
 
         with self.assertLogs(logger, level='DEBUG') as cm:
-            builds = [build for build in jenkins.fetch()]
+            builds = list(jenkins.fetch())
             self.assertRegex(cm.output[1], 'DEBUG:perceval.backends.core.jenkins:No builds for job.*')
             self.assertRegex(cm.output[2], 'DEBUG:perceval.backends.core.jenkins:No builds for job.*')
 
@@ -378,7 +390,7 @@ class TestJenkinsBackend(unittest.TestCase):
                           ])
 
         with self.assertLogs(logger, level='WARNING') as cm:
-            builds = [build for build in jenkins.fetch()]
+            builds = list(jenkins.fetch())
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:Not getting blacklisted job: '
                                            'apex-build-brahmaputra')
             self.assertEqual(cm.output[1], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
@@ -404,7 +416,7 @@ class TestJenkinsBackend(unittest.TestCase):
         jenkins = Jenkins(SERVER_URL, detail_depth=2)
 
         with self.assertLogs(logger, level='WARNING') as cm:
-            builds = [build for build in jenkins.fetch()]
+            builds = list(jenkins.fetch())
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
                                            'Internal Server Error for url: '
                                            'http://example.com/ci/job/500-error-job/api/json?depth=2')
@@ -416,7 +428,7 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(len(builds), 64)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
-                as build_json:
+                    as build_json:
             first_build = json.load(build_json)
             self.assertDictEqual(builds[0]['data'], first_build['data'])
 
@@ -459,7 +471,7 @@ class TestJenkinsBackend(unittest.TestCase):
         # Test fetch builds from jobs list
         jenkins = Jenkins(SERVER_URL)
 
-        builds = [build for build in jenkins.fetch()]
+        builds = list(jenkins.fetch())
 
         build = builds[0]
         self.assertEqual(jenkins.metadata_id(build['data']), build['search_fields']['item_id'])
@@ -486,7 +498,7 @@ class TestJenkinsBackend(unittest.TestCase):
         jenkins = Jenkins(SERVER_URL, user=USER, api_token=TOKEN)
 
         with self.assertLogs(logger, level='WARNING') as cm:
-            builds = [build for build in jenkins.fetch()]
+            builds = list(jenkins.fetch())
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:500 Server Error: '
                                            'Internal Server Error for url: '
                                            'http://example.com/ci/job/500-error-job/api/json?depth=1')
@@ -498,7 +510,7 @@ class TestJenkinsBackend(unittest.TestCase):
         self.assertEqual(len(builds), 69)
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/jenkins/jenkins_build.json")) \
-                as build_json:
+                    as build_json:
             first_build = json.load(build_json)
             self.assertDictEqual(builds[0]['data'], first_build['data'])
 
@@ -543,7 +555,7 @@ class TestJenkinsBackend(unittest.TestCase):
                                body=body, status=200)
 
         jenkins = Jenkins(SERVER_URL)
-        builds = [build for build in jenkins.fetch()]
+        builds = list(jenkins.fetch())
 
         self.assertEqual(len(builds), 0)
 
@@ -559,7 +571,7 @@ class TestJenkinsBackend(unittest.TestCase):
         nrequests = len(requests_http)
 
         with self.assertLogs(logger, level='WARNING') as cm:
-            builds = [build for build in jenkins.fetch()]
+            builds = list(jenkins.fetch())
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.jenkins:'
                                            'Not getting blacklisted job: apex-build-brahmaputra')
 
@@ -777,7 +789,9 @@ class TestJenkinsClient(unittest.TestCase):
         client = JenkinsClient(SERVER_URL, sleep_time=0.1)
 
         start = float(time.time())
-        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
+        expected = start + sum(
+            i * client.sleep_time for i in range(client.MAX_RETRIES)
+        )
 
         with self.assertRaises(requests.exceptions.RequestException):
             _ = client.get_builds(JOB_BUILDS_1, client.base_url)

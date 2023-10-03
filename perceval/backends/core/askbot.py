@@ -88,9 +88,7 @@ class Askbot(Backend):
             from_date = DEFAULT_DATETIME
         logger.info(f"Pulling Askbot data from {from_date}")
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the questions
@@ -210,8 +208,9 @@ class Askbot(Backend):
 
         :returns: a list of comments with the ids as hashes
         """
-        comments = {}
-        comments[question['id']] = json.loads(self.client.get_comments(question['id']))
+        comments = {
+            question['id']: json.loads(self.client.get_comments(question['id']))
+        }
         for object_id in question['answer_ids']:
             comments[object_id] = json.loads(self.client.get_comments(object_id))
         logger.debug(f"{len(comments)} comments found")
@@ -243,7 +242,7 @@ class Askbot(Backend):
         for page in html_question:
             answers.extend(AskbotParser.parse_answers(page))
 
-        if len(answers) != 0:
+        if answers:
             question_object['answers'] = answers
             for answer in question_object['answers']:
                 if comments[int(answer['id'])]:
@@ -400,12 +399,11 @@ class AskbotParser:
 
         :returns: an object with the parsed information
         """
-        container_info = {}
         bs_question = bs4.BeautifulSoup(html_question, "html.parser")
         question = AskbotParser._find_question_container(bs_question)
         container = question.select("div.post-update-info")
         created = container[0]
-        container_info['author'] = AskbotParser.parse_user_info(created)
+        container_info = {'author': AskbotParser.parse_user_info(created)}
         try:
             container[1]
         except IndexError:
@@ -465,7 +463,7 @@ class AskbotParser:
         # Select all the answers
         bs_question = bs4.BeautifulSoup(html_question, "html.parser")
         bs_answers = bs_question.select("div.answer")
-        logger.debug(f"{str(len(bs_answers))} answers found")
+        logger.debug(f"{len(bs_answers)} answers found")
         for bs_answer in bs_answers:
             answer_id = bs_answer.attrs["data-post-id"]
             votes_element = bs_answer.select("div.vote-number")[0].text

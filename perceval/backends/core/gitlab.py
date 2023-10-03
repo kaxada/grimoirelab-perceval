@@ -171,9 +171,7 @@ class GitLab(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the items (issues or merge_requests)
@@ -185,12 +183,11 @@ class GitLab(Backend):
         """
         from_date = kwargs['from_date']
 
-        if category == CATEGORY_ISSUE:
-            items = self.__fetch_issues(from_date)
-        else:
-            items = self.__fetch_merge_requests(from_date)
-
-        return items
+        return (
+            self.__fetch_issues(from_date)
+            if category == CATEGORY_ISSUE
+            else self.__fetch_merge_requests(from_date)
+        )
 
     @classmethod
     def has_archiving(cls):
@@ -238,12 +235,7 @@ class GitLab(Backend):
         This backend only generates one type of item which is
         'issue'.
         """
-        if "merged_by" in item:
-            category = CATEGORY_MERGE_REQUEST
-        else:
-            category = CATEGORY_ISSUE
-
-        return category
+        return CATEGORY_MERGE_REQUEST if "merged_by" in item else CATEGORY_ISSUE
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -391,9 +383,7 @@ class GitLab(Backend):
         group_emojis = self.client.emojis(item_type, item_id)
         for raw_emojis in group_emojis:
 
-            for emoji in json.loads(raw_emojis):
-                emojis.append(emoji)
-
+            emojis.extend(iter(json.loads(raw_emojis)))
         return emojis
 
     def __get_note_award_emoji(self, item_type, item_id, note_id):
@@ -405,8 +395,7 @@ class GitLab(Backend):
         try:
             for raw_emojis in group_emojis:
 
-                for emoji in json.loads(raw_emojis):
-                    emojis.append(emoji)
+                emojis.extend(iter(json.loads(raw_emojis)))
         except requests.exceptions.HTTPError as error:
             if error.response.status_code == 404:
                 logger.warning("Emojis not available for %s ",
@@ -506,7 +495,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
         if base_url:
             parts = urllib.parse.urlparse(base_url)
-            base_url = parts.scheme + '://' + parts.netloc + '/api/v4'
+            base_url = f'{parts.scheme}://{parts.netloc}/api/v4'
         else:
             base_url = GITLAB_API_URL
 
@@ -554,9 +543,13 @@ class GitLabClient(HttpClient, RateLimitHandler):
     def merge(self, merge_id):
         """Get the merge full data"""
 
-        path = urijoin(self.base_url,
-                       self.RPROJECTS, self.owner + '%2F' + self.repository,
-                       self.RMERGES, merge_id)
+        path = urijoin(
+            self.base_url,
+            self.RPROJECTS,
+            f'{self.owner}%2F{self.repository}',
+            self.RMERGES,
+            merge_id,
+        )
 
         response = self.fetch(path)
 
@@ -577,9 +570,15 @@ class GitLabClient(HttpClient, RateLimitHandler):
     def merge_version(self, merge_id, version_id):
         """Get merge version detail"""
 
-        path = urijoin(self.base_url,
-                       self.RPROJECTS, self.owner + '%2F' + self.repository,
-                       self.RMERGES, merge_id, self.RVERSIONS, version_id)
+        path = urijoin(
+            self.base_url,
+            self.RPROJECTS,
+            f'{self.owner}%2F{self.repository}',
+            self.RMERGES,
+            merge_id,
+            self.RVERSIONS,
+            version_id,
+        )
 
         response = self.fetch(path)
 
@@ -632,9 +631,7 @@ class GitLabClient(HttpClient, RateLimitHandler):
 
         time_to_reset = self.rate_limit_reset_ts - (datetime_utcnow().replace(microsecond=0).timestamp() + 1)
 
-        if time_to_reset < 0:
-            time_to_reset = 0
-
+        time_to_reset = max(time_to_reset, 0)
         return time_to_reset
 
     def fetch(self, url, payload=None, headers=None, method=HttpClient.GET, stream=False):
@@ -661,18 +658,21 @@ class GitLabClient(HttpClient, RateLimitHandler):
     def fetch_items(self, path, payload):
         """Return the items from GitLab API using links pagination"""
 
-        page = 0  # current page
         last_page = None  # last page
-        url_next = urijoin(self.base_url, self.RPROJECTS, self.owner + '%2F' + self.repository, path)
+        url_next = urijoin(
+            self.base_url,
+            self.RPROJECTS,
+            f'{self.owner}%2F{self.repository}',
+            path,
+        )
 
-        logger.debug("Get GitLab paginated items from " + url_next)
+        logger.debug(f"Get GitLab paginated items from {url_next}")
 
         response = self.fetch(url_next, payload=payload)
         response.encoding = 'utf-8'
 
         items = response.text
-        page += 1
-
+        page = 0 + 1
         if 'last' in response.links:
             last_url = response.links['last']['url']
             last_page = last_url.split('&page=')[1].split('&')[0]
@@ -720,22 +720,18 @@ class GitLabClient(HttpClient, RateLimitHandler):
     def _set_extra_headers(self):
         """Set extra headers for session"""
 
-        headers = {}
-
         if not self.token:
-            return headers
-
-        if self.is_oauth_token:
-            headers = {self.HAUTHORIZATION: "Bearer %s" % self.token}
-        else:
-            headers = {self.HPRIVATE_TOKEN: self.token}
-
-        return headers
+            return {}
+        return (
+            {self.HAUTHORIZATION: f"Bearer {self.token}"}
+            if self.is_oauth_token
+            else {self.HPRIVATE_TOKEN: self.token}
+        )
 
     def _init_rate_limit(self):
         """Initialize rate limit information"""
 
-        url = urijoin(self.base_url, 'projects', self.owner + '%2F' + self.repository)
+        url = urijoin(self.base_url, 'projects', f'{self.owner}%2F{self.repository}')
         try:
             response = super().fetch(url)
             self.update_rate_limit(response)

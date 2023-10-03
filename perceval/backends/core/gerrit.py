@@ -105,9 +105,7 @@ class Gerrit(Backend):
             from_date = DEFAULT_DATETIME
 
         kwargs = {'from_date': from_date}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the reviews
@@ -119,13 +117,9 @@ class Gerrit(Backend):
         """
         from_date = kwargs['from_date']
 
-        if self.client.version[0] == 2 and self.client.version[1] == 8:
-            fetcher = self._fetch_gerrit28(from_date)
-        else:
-            fetcher = self._fetch_gerrit(from_date)
-
-        for review in fetcher:
-            yield review
+        yield from self._fetch_gerrit28(from_date) if self.client.version[
+            0
+        ] == 2 and self.client.version[1] == 8 else self._fetch_gerrit(from_date)
 
     @classmethod
     def has_archiving(cls):
@@ -179,13 +173,7 @@ class Gerrit(Backend):
         items_raw = "[" + raw_data.replace("\n", ",") + "]"
         items_raw = items_raw.replace(",]", "]")
         items = json.loads(items_raw)
-        reviews = []
-
-        for item in items:
-            if 'project' in item.keys():
-                reviews.append(item)
-
-        return reviews
+        return [item for item in items if 'project' in item.keys()]
 
     def _init_client(self, from_archive=False):
 
@@ -232,7 +220,7 @@ class Gerrit(Backend):
 
             updated = review['lastUpdated']
             if updated <= from_ut:
-                logger.debug("No more updates for %s" % (self.hostname))
+                logger.debug(f"No more updates for {self.hostname}")
                 break
             else:
                 yield review
@@ -263,7 +251,7 @@ class Gerrit(Backend):
                 pass  # last_item is a string in old gerrits
             updated = review['lastUpdated']
             if updated <= from_ut:
-                logger.debug("No more updates for %s" % (self.hostname))
+                logger.debug(f"No more updates for {self.hostname}")
                 break
             else:
                 yield review
@@ -329,15 +317,14 @@ class GerritClient():
             ssh_opts += "-o StrictHostKeyChecking=no "
 
         if self.id_filepath:
-            ssh_opts += "-i %s " % self.id_filepath
+            ssh_opts += f"-i {self.id_filepath} "
 
         if self.port:
-            self.gerrit_cmd = "ssh %s -p %s %s@%s" % (ssh_opts, self.port,
-                                                      self.gerrit_user, self.repository)
+            self.gerrit_cmd = f"ssh {ssh_opts} -p {self.port} {self.gerrit_user}@{self.repository}"
         else:
-            self.gerrit_cmd = "ssh %s %s@%s" % (ssh_opts, self.gerrit_user, self.repository)
+            self.gerrit_cmd = f"ssh {ssh_opts} {self.gerrit_user}@{self.repository}"
 
-        self.gerrit_cmd += " %s " % (GerritClient.CMD_GERRIT)
+        self.gerrit_cmd += f" {GerritClient.CMD_GERRIT} "
 
     @property
     def version(self):
@@ -346,18 +333,18 @@ class GerritClient():
         if self._version:
             return self._version
 
-        cmd = self.gerrit_cmd + " %s " % (GerritClient.CMD_VERSION)
+        cmd = f"{self.gerrit_cmd} {GerritClient.CMD_VERSION} "
 
-        logger.debug("Getting version: %s" % (cmd))
+        logger.debug(f"Getting version: {cmd}")
         raw_data = self.__execute(cmd)
         raw_data = str(raw_data, "UTF-8")
-        logger.debug("Gerrit version: %s" % (raw_data))
+        logger.debug(f"Gerrit version: {raw_data}")
 
         # output: gerrit version 2.10-rc1-988-g333a9dd
         m = re.match(GerritClient.VERSION_REGEX, raw_data)
 
         if not m:
-            cause = "Invalid gerrit version %s" % raw_data
+            cause = f"Invalid gerrit version {raw_data}"
             raise BackendError(cause=cause)
 
         try:
@@ -389,10 +376,7 @@ class GerritClient():
         gerrit_version = self.version
 
         if (gerrit_version[0] == 2 and gerrit_version[1] > 9) or gerrit_version[0] == 3:
-            if last_item is None:
-                next_item = 0
-            else:
-                next_item = last_item
+            next_item = 0 if last_item is None else last_item
         elif gerrit_version[0] == 2 and gerrit_version[1] == 9:
             # https://groups.google.com/forum/#!topic/repo-discuss/yQgRR5hlS3E
             cause = "Gerrit 2.9.0 does not support pagination"
@@ -412,19 +396,16 @@ class GerritClient():
 
         :returns the sanitized cmd
         """
-        sanitized_cmd = re.sub(r" \S*@", ' xxxxx@', cmd)
-
-        return sanitized_cmd
+        return re.sub(r" \S*@", ' xxxxx@', cmd)
 
     def __execute(self, cmd):
         """Execute gerrit command"""
 
-        if self.from_archive:
-            response = self.__execute_from_archive(cmd)
-        else:
-            response = self.__execute_from_remote(cmd)
-
-        return response
+        return (
+            self.__execute_from_archive(cmd)
+            if self.from_archive
+            else self.__execute_from_remote(cmd)
+        )
 
     def __execute_from_archive(self, cmd):
         """Execute gerrit command against the archive"""
@@ -453,7 +434,9 @@ class GerritClient():
                 retries += 1
 
         if result is None:
-            result = RuntimeError(cmd + " failed " + str(self.MAX_RETRIES) + " times. Giving up!")
+            result = RuntimeError(
+                f"{cmd} failed {str(self.MAX_RETRIES)} times. Giving up!"
+            )
 
         if self.archive:
             cmd = self.sanitize_for_archive(cmd)
@@ -467,37 +450,38 @@ class GerritClient():
     def _get_gerrit_cmd(self, last_item, filter_=None):
 
         if filter_ and filter_ not in ['status:open', 'status:closed']:
-            cause = "Filter not supported in gerrit %s" % (filter_)
+            cause = f"Filter not supported in gerrit {filter_}"
             raise BackendError(cause=cause)
 
-        cmd = self.gerrit_cmd + " query "
+        cmd = f"{self.gerrit_cmd} query "
         if self.project:
-            cmd += "project:" + self.project + " "
-        cmd += "limit:" + str(self.max_reviews)
+            cmd += f"project:{self.project} "
+        cmd += f"limit:{str(self.max_reviews)}"
 
         if not filter_:
             cmd += " '(status:open OR status:closed)"
             if self.blacklist_reviews:
-                blacklist_reviews = " AND NOT (%s)" % (' OR '.join(self.blacklist_reviews))
+                blacklist_reviews = f" AND NOT ({' OR '.join(self.blacklist_reviews)})"
                 cmd += blacklist_reviews
             cmd += "'"
 
+        elif self.blacklist_reviews:
+            blacklist_reviews = (
+                f" '{filter_} AND NOT ({','.join(self.blacklist_reviews)})'"
+            )
+            cmd += blacklist_reviews
         else:
-            if self.blacklist_reviews:
-                blacklist_reviews = " '%s AND NOT (%s)'" % (filter_, ','.join(self.blacklist_reviews))
-                cmd += blacklist_reviews
-            else:
-                cmd += " %s " % (filter_)
+            cmd += f" {filter_} "
 
         cmd += " --all-approvals --comments --format=JSON"
 
-        gerrit_version = self.version
-
         if last_item is not None:
+            gerrit_version = self.version
+
             if (gerrit_version[0] == 2 and gerrit_version[1] >= 9) or gerrit_version[0] == 3:
-                cmd += " --start=" + str(last_item)
+                cmd += f" --start={str(last_item)}"
             else:
-                cmd += " resume_sortkey:" + last_item
+                cmd += f" resume_sortkey:{last_item}"
 
         return cmd
 

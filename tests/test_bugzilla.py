@@ -43,11 +43,11 @@ from base import TestCaseBackendArchive
 
 
 BUGZILLA_SERVER_URL = 'http://example.com'
-BUGZILLA_LOGIN_URL = BUGZILLA_SERVER_URL + '/index.cgi'
-BUGZILLA_METADATA_URL = BUGZILLA_SERVER_URL + '/show_bug.cgi'
-BUGZILLA_BUGLIST_URL = BUGZILLA_SERVER_URL + '/buglist.cgi'
-BUGZILLA_BUG_URL = BUGZILLA_SERVER_URL + '/show_bug.cgi'
-BUGZILLA_BUG_ACTIVITY_URL = BUGZILLA_SERVER_URL + '/show_activity.cgi'
+BUGZILLA_LOGIN_URL = f'{BUGZILLA_SERVER_URL}/index.cgi'
+BUGZILLA_METADATA_URL = f'{BUGZILLA_SERVER_URL}/show_bug.cgi'
+BUGZILLA_BUGLIST_URL = f'{BUGZILLA_SERVER_URL}/buglist.cgi'
+BUGZILLA_BUG_URL = f'{BUGZILLA_SERVER_URL}/show_bug.cgi'
+BUGZILLA_BUG_ACTIVITY_URL = f'{BUGZILLA_SERVER_URL}/show_activity.cgi'
 
 
 def read_file(filename, mode='r'):
@@ -142,7 +142,7 @@ class TestBugzillaBackend(unittest.TestCase):
 
         bg = Bugzilla(BUGZILLA_SERVER_URL,
                       max_bugs=5, max_bugs_csv=500)
-        bugs = [bug for bug in bg.fetch()]
+        bugs = list(bg.fetch())
 
         self.assertEqual(len(bugs), 7)
 
@@ -270,7 +270,7 @@ class TestBugzillaBackend(unittest.TestCase):
 
         bg = Bugzilla(BUGZILLA_SERVER_URL,
                       max_bugs=5, max_bugs_csv=500)
-        bugs = [bug for bug in bg.fetch()]
+        bugs = list(bg.fetch())
 
         self.assertEqual(len(bugs), 7)
 
@@ -368,7 +368,7 @@ class TestBugzillaBackend(unittest.TestCase):
         from_date = datetime.datetime(2015, 1, 1)
 
         bg = Bugzilla(BUGZILLA_SERVER_URL)
-        bugs = [bug for bug in bg.fetch(from_date=from_date)]
+        bugs = list(bg.fetch(from_date=from_date))
 
         self.assertEqual(len(bugs), 2)
         self.assertEqual(bugs[0]['data']['bug_id'][0]['__text__'], '30')
@@ -437,7 +437,7 @@ class TestBugzillaBackend(unittest.TestCase):
         from_date = datetime.datetime(2100, 1, 1)
 
         bg = Bugzilla(BUGZILLA_SERVER_URL)
-        bugs = [bug for bug in bg.fetch(from_date=from_date)]
+        bugs = list(bg.fetch(from_date=from_date))
 
         self.assertEqual(len(bugs), 0)
 
@@ -507,7 +507,7 @@ class TestBugzillaBackend(unittest.TestCase):
         bg = Bugzilla(BUGZILLA_SERVER_URL,
                       user='jsmith@example.com',
                       password='1234')
-        bugs = [bug for bug in bg.fetch(from_date=from_date)]
+        bugs = list(bg.fetch(from_date=from_date))
 
         self.assertEqual(len(bugs), 2)
         self.assertEqual(bugs[0]['data']['bug_id'][0]['__text__'], '30')
@@ -718,7 +718,7 @@ class TestBugzillaBackendParsers(unittest.TestCase):
         raw_csv = read_file('data/bugzilla/bugzilla_buglist.csv')
 
         bugs = Bugzilla.parse_buglist(raw_csv)
-        result = [bug for bug in bugs]
+        result = list(bugs)
 
         self.assertEqual(len(result), 5)
         self.assertEqual(result[0]['bug_id'], '15')
@@ -730,7 +730,7 @@ class TestBugzillaBackendParsers(unittest.TestCase):
         raw_xml = read_file('data/bugzilla/bugzilla_bugs_details.xml')
 
         bugs = Bugzilla.parse_bugs_details(raw_xml)
-        result = [bug for bug in bugs]
+        result = list(bugs)
 
         self.assertEqual(len(result), 5)
 
@@ -742,7 +742,7 @@ class TestBugzillaBackendParsers(unittest.TestCase):
         raw_xml = read_file('data/bugzilla/bugzilla_bugs_details_next.xml')
 
         bugs = Bugzilla.parse_bugs_details(raw_xml)
-        result = [bug for bug in bugs]
+        result = list(bugs)
 
     def test_parse_invalid_bug_details(self):
         """Test whether it fails parsing an invalid XML with no bugs"""
@@ -751,7 +751,7 @@ class TestBugzillaBackendParsers(unittest.TestCase):
 
         with self.assertRaises(ParseError):
             bugs = Bugzilla.parse_bugs_details(raw_xml)
-            _ = [bug for bug in bugs]
+            _ = list(bugs)
 
     def test_parse_activity(self):
         """Test activity bug parsing"""
@@ -759,7 +759,7 @@ class TestBugzillaBackendParsers(unittest.TestCase):
         raw_html = read_file('data/bugzilla/bugzilla_bug_activity.html')
 
         activity = Bugzilla.parse_bug_activity(raw_html)
-        result = [event for event in activity]
+        result = list(activity)
 
         self.assertEqual(len(result), 14)
 
@@ -791,13 +791,13 @@ class TestBugzillaBackendParsers(unittest.TestCase):
         raw_html = read_file('data/bugzilla/bugzilla_bug_activity_empty.html')
 
         activity = Bugzilla.parse_bug_activity(raw_html)
-        result = [event for event in activity]
+        result = list(activity)
         self.assertEqual(len(result), 0)
 
         raw_html = read_file('data/bugzilla/bugzilla_bug_activity_empty_alt.html')
 
         activity = Bugzilla.parse_bug_activity(raw_html)
-        result = [event for event in activity]
+        result = list(activity)
         self.assertEqual(len(result), 0)
 
     def test_parse_activity_no_table(self):
@@ -807,7 +807,7 @@ class TestBugzillaBackendParsers(unittest.TestCase):
 
         with self.assertRaises(ParseError):
             activity = Bugzilla.parse_bug_activity(raw_html)
-            _ = [event for event in activity]
+            _ = list(activity)
 
 
 class TestBugzillaCommand(unittest.TestCase):

@@ -62,16 +62,17 @@ def setup_http_server(no_message=False, rate_limit_headers=None, from_date=False
     if not rate_limit_headers:
         rate_limit_headers = {}
 
-    httpretty.register_uri(httpretty.GET,
-                           ROCKETCHAT_CHANNEL_URL + '?roomName=testapichannel',
-                           body=channel_info,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f'{ROCKETCHAT_CHANNEL_URL}?roomName=testapichannel',
+        body=channel_info,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    roomName = '?roomName=testapichannel'
     sort = '&sort={"_updatedAt": 1}'
     count = '&count=2'
-    params = roomName + sort + count
+    params = f'?roomName=testapichannel{sort}{count}'
 
     if no_message:
         query = '&q={"_updatedAt": {"$gte": {"$date": "2020-05-10T00:00:00+00:00"}}}'
@@ -185,7 +186,7 @@ class TestRocketChatBackend(unittest.TestCase):
 
         backend = RocketChat(url='https://open.rocket.chat', user_id='123user',
                              api_token='aaa', channel='testapichannel')
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         self.assertEqual(len(messages), 4)
 
@@ -255,7 +256,7 @@ class TestRocketChatBackend(unittest.TestCase):
         backend = RocketChat(url='https://open.rocket.chat', user_id='123user',
                              api_token='aaa', channel='testapichannel')
 
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
         self.assertEqual(len(messages), 1)
 
         message = messages[0]
@@ -279,7 +280,7 @@ class TestRocketChatBackend(unittest.TestCase):
 
         backend = RocketChat(url='https://open.rocket.chat', user_id='123user',
                              api_token='aaa', channel='testapichannel')
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         message = messages[0]
         self.assertEqual(message['search_fields']['item_id'], backend.metadata_id(message['data']))
@@ -294,7 +295,7 @@ class TestRocketChatBackend(unittest.TestCase):
 
         backend = RocketChat(url='https://open.rocket.chat', user_id='123user',
                              api_token='aaa', channel='testapichannel')
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
         self.assertListEqual(messages, [])
 
 

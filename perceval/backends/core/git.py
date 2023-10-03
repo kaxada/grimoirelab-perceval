@@ -134,9 +134,7 @@ class Git(Backend):
             'latest_items': latest_items,
             'no_update': no_update
         }
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the commits
@@ -235,11 +233,10 @@ class Git(Backend):
             given file
         """
         with open(filepath, 'r', errors='surrogateescape',
-                  newline=os.linesep) as f:
+                      newline=os.linesep) as f:
             parser = GitParser(f)
 
-            for commit in parser.parse():
-                yield commit
+            yield from parser.parse()
 
     @staticmethod
     def parse_git_log_from_iter(iterator):
@@ -256,8 +253,7 @@ class Git(Backend):
         """
         parser = GitParser(iterator)
 
-        for commit in parser.parse():
-            yield commit
+        yield from parser.parse()
 
     def _init_client(self, from_archive=False):
         pass
@@ -274,12 +270,13 @@ class Git(Backend):
 
         repo = self.__create_git_repository()
 
-        if default_mode:
-            commits = self.__fetch_commits_from_repo(repo, from_date, to_date, branches, no_update)
-        else:
-            commits = self.__fetch_newest_commits_from_repo(repo)
-
-        return commits
+        return (
+            self.__fetch_commits_from_repo(
+                repo, from_date, to_date, branches, no_update
+            )
+            if default_mode
+            else self.__fetch_newest_commits_from_repo(repo)
+        )
 
     def __fetch_commits_from_repo(self, repo, from_date, to_date, branches, no_update):
         if branches is None:
@@ -348,7 +345,7 @@ class GitCommand(BackendCommand):
                 base_path = os.path.expanduser('~/.perceval/repositories/')
 
             processed_uri = self.parsed_args.uri.lstrip('/')
-            git_path = os.path.join(base_path, processed_uri) + '-git'
+            git_path = f'{os.path.join(base_path, processed_uri)}-git'
 
         setattr(self.parsed_args, 'gitpath', git_path)
 
@@ -579,22 +576,19 @@ class GitParser:
         # It only has to check whether the line has to be parsed
         # again or not
         self.state = self.COMMIT
-        parsed = m is not None
-
-        return parsed
+        return m is not None
 
     def _handle_commit(self, line):
         m = self.GIT_COMMIT_REGEXP.match(line)
         if not m:
-            msg = "commit expected on line %s" % (str(self.nline))
+            msg = f"commit expected on line {str(self.nline)}"
             raise ParseError(cause=msg)
 
         parents = self.__parse_data_list(m.group('parents'))
         refs = self.__parse_data_list(m.group('refs'), sep=',')
 
         # Initialize a new commit
-        self.commit = {}
-        self.commit['commit'] = m.group('commit')
+        self.commit = {'commit': m.group('commit')}
         self.commit['parents'] = parents
         self.commit['refs'] = refs
 
@@ -610,7 +604,7 @@ class GitParser:
 
         m = self.GIT_HEADER_TRAILER_REGEXP.match(line)
         if not m:
-            msg = "invalid header format on line %s" % (str(self.nline))
+            msg = f"invalid header format on line {str(self.nline)}"
             raise ParseError(cause=msg)
 
         header = m.group('name')
@@ -647,19 +641,16 @@ class GitParser:
         return True
 
     def _handle_file(self, line):
-        m = self.GIT_NEXT_STATE_REGEXP.match(line)
-        if m:
+        if m := self.GIT_NEXT_STATE_REGEXP.match(line):
             self.state = self.COMMIT
             return True
 
-        m = self.GIT_ACTION_REGEXP.match(line)
-        if m:
+        if m := self.GIT_ACTION_REGEXP.match(line):
             data = m.groupdict()
             self._handle_action_data(data)
             return True
 
-        m = self.GIT_STATS_REGEXP.match(line)
-        if m:
+        if m := self.GIT_STATS_REGEXP.match(line):
             data = m.groupdict()
             self._handle_stats_data(data)
             return True
@@ -731,7 +722,7 @@ class GitParser:
         j = f.find('}')
 
         if i > -1 and j > -1:
-            prefix = f[0:i]
+            prefix = f[:i]
             inner = f[i + 1:f.find(' => ', i)]
             suffix = f[j + 1:]
             return prefix + inner + suffix
@@ -763,10 +754,7 @@ class _GraphWalker:
         pass
 
     def next(self):
-        if self.heads:
-            ret = self.heads.pop()
-            return ret
-        return None
+        return self.heads.pop() if self.heads else None
 
     __next__ = next
 
@@ -797,13 +785,13 @@ class GitRepository:
         gitdir = os.path.join(dirpath, 'HEAD')
 
         if not os.path.exists(dirpath):
-            cause = "directory '%s' for Git repository '%s' does not exist" % (dirpath, uri)
+            cause = f"directory '{dirpath}' for Git repository '{uri}' does not exist"
             raise RepositoryError(cause=cause)
         elif not os.path.exists(gitdir):
             warning = "Working directories for Git repositories no longer supported." \
-                "Please remove it or clone it using --mirror option."
+                    "Please remove it or clone it using --mirror option."
             logger.warning(warning)
-            cause = "directory '%s' is not a Git mirror of repository '%s'" % (dirpath, uri)
+            cause = f"directory '{dirpath}' is not a Git mirror of repository '{uri}'"
             raise RepositoryError(cause=cause)
 
         self.uri = uri
@@ -863,14 +851,13 @@ class GitRepository:
         outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
 
         try:
-            cobjs = {k: v for k, v in (x.split(': ') for x in outs.split('\n'))}
+            cobjs = dict((x.split(': ') for x in outs.split('\n')))
             nobjs = int(cobjs['count']) + int(cobjs['in-pack'])
         except KeyError as e:
-            error = "unable to parse 'count-objects' output; reason: '%s' entry not found" \
-                % e.args[0]
+            error = f"unable to parse 'count-objects' output; reason: '{e.args[0]}' entry not found"
             raise RepositoryError(cause=error)
         except ValueError as e:
-            error = "unable to parse 'count-objects' output; reason: %s" % str(e)
+            error = f"unable to parse 'count-objects' output; reason: {str(e)}"
             raise RepositoryError(cause=error)
 
         logger.debug("Git %s repository has %s objects",
@@ -992,7 +979,7 @@ class GitRepository:
         elif len(branches) == 0:
             cmd_rev_list.extend(['--branches', '--tags', '--max-count=0'])
         else:
-            branches = ['refs/heads/' + branch for branch in branches]
+            branches = [f'refs/heads/{branch}' for branch in branches]
             cmd_rev_list.extend(branches)
 
         for line in self._exec_nb(cmd_rev_list, cwd=self.dirpath, env=self.gitenv):
@@ -1040,23 +1027,21 @@ class GitRepository:
 
         if from_date:
             dt = from_date.strftime("%Y-%m-%d %H:%M:%S %z")
-            cmd_log.append('--since=' + dt)
+            cmd_log.append(f'--since={dt}')
 
         if to_date:
             dt = to_date.strftime("%Y-%m-%d %H:%M:%S %z")
-            cmd_log.append('--until=' + dt)
+            cmd_log.append(f'--until={dt}')
 
         if branches is None:
             cmd_log.extend(['--branches', '--tags', '--remotes=origin'])
         elif len(branches) == 0:
             cmd_log.append('--max-count=0')
         else:
-            branches = ['refs/heads/' + branch for branch in branches]
+            branches = [f'refs/heads/{branch}' for branch in branches]
             cmd_log.extend(branches)
 
-        for line in self._exec_nb(cmd_log, cwd=self.dirpath, env=self.gitenv):
-            yield line
-
+        yield from self._exec_nb(cmd_log, cwd=self.dirpath, env=self.gitenv)
         logger.debug("Git log fetched from %s repository (%s)",
                      self.uri, self.dirpath)
 
@@ -1094,9 +1079,7 @@ class GitRepository:
         cmd_show.extend(self.GIT_PRETTY_OUTPUT_OPTS)
         cmd_show.extend(commits)
 
-        for line in self._exec_nb(cmd_show, cwd=self.dirpath, env=self.gitenv):
-            yield line
-
+        yield from self._exec_nb(cmd_show, cwd=self.dirpath, env=self.gitenv)
         logger.debug("Git show fetched from %s repository (%s)",
                      self.uri, self.dirpath)
 
@@ -1139,7 +1122,7 @@ class GitRepository:
     def _read_commits_from_pack(self, packet_name):
         """Read the commits of a pack."""
 
-        filepath = 'objects/pack/pack-' + packet_name
+        filepath = f'objects/pack/pack-{packet_name}'
 
         cmd_verify_pack = ['git', 'verify-pack', '-v', filepath]
 
@@ -1231,7 +1214,7 @@ class GitRepository:
             action = 'deleted'
         else:
             cmd.extend([ref.refname, ref.hash])
-            action = 'updated to %s' % ref.hash
+            action = f'updated to {ref.hash}'
 
         try:
             self._exec(cmd, cwd=self.dirpath, env=self.gitenv)
@@ -1306,11 +1289,11 @@ class GitRepository:
                 # the last line in stderr to provide the cause
                 if self.failed_message is not None:
                     # We had a message, there is a newer line, print it
-                    logger.debug("Git log stderr: " + self.failed_message)
+                    logger.debug(f"Git log stderr: {self.failed_message}")
                 self.failed_message = err_line
             else:
                 # The subprocess is successfully up to now, print the line
-                logger.debug("Git log stderr: " + err_line)
+                logger.debug(f"Git log stderr: {err_line}")
 
     @staticmethod
     def _exec(cmd, cwd=None, env=None, ignored_error_codes=None,
@@ -1345,7 +1328,7 @@ class GitRepository:
 
         if proc.returncode != 0 and proc.returncode not in ignored_error_codes:
             err = errs.decode(encoding, errors='surrogateescape')
-            cause = "git command - %s" % err
+            cause = f"git command - {err}"
             raise RepositoryError(cause=cause)
         else:
             logger.debug(errs.decode(encoding, errors='surrogateescape'))

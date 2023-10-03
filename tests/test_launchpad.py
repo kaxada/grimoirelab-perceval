@@ -44,8 +44,10 @@ LAUNCHPAD_API_URL = "https://api.launchpad.net/1.0"
 CONSUMER_KEY = "myapp"
 OAUTH_TOKEN = 'GFVlv1PzWjGrMLcD90V5'
 
-LAUNCHPAD_PACKAGE_PROJECT_URL = LAUNCHPAD_API_URL + "/mydistribution/+source/mypackage"
-LAUNCHPAD_DISTRIBUTION_PROJECT_URL = LAUNCHPAD_API_URL + "/mydistribution"
+LAUNCHPAD_PACKAGE_PROJECT_URL = (
+    f"{LAUNCHPAD_API_URL}/mydistribution/+source/mypackage"
+)
+LAUNCHPAD_DISTRIBUTION_PROJECT_URL = f"{LAUNCHPAD_API_URL}/mydistribution"
 
 
 def read_file(filename, mode='r'):
@@ -163,66 +165,80 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2",
-                               body=issue_2,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3",
-                               body=issue_3,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/1", body=issue_1, status=200
+        )
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/2", body=issue_2, status=200
+        )
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/3", body=issue_3, status=200
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/messages",
-                               body=issue_2_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/messages",
-                               body=empty_issue_comments,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/messages",
+            body=issue_1_comments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/messages",
+            body=issue_2_comments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/messages",
+            body=empty_issue_comments,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/attachments",
-                               body=empty_issue_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/attachments",
-                               body=empty_issue_attachments,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/attachments",
+            body=issue_1_attachments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/attachments",
+            body=empty_issue_attachments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/attachments",
+            body=empty_issue_attachments,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/activity",
-                               body=issue_2_activities,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/activity",
-                               body=empty_issue_activities,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/activity",
+            body=issue_1_activities,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/activity",
+            body=issue_2_activities,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/activity",
+            body=empty_issue_activities,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/~user", body=user_1, status=200
+        )
 
         launchpad = Launchpad('mydistribution', package="mypackage",
                               items_per_page=2)
-        issues = [issues for issues in launchpad.fetch(from_date=None)]
+        issues = list(launchpad.fetch(from_date=None))
 
         issue_1_expected = json.loads(issue_1_expected)
         issue_2_expected = json.loads(issue_2_expected)
@@ -315,66 +331,80 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2",
-                               body=issue_2,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3",
-                               body=issue_3,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/1", body=issue_1, status=200
+        )
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/2", body=issue_2, status=200
+        )
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/3", body=issue_3, status=200
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/messages",
-                               body=issue_2_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/messages",
-                               body=empty_issue_comments,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/messages",
+            body=issue_1_comments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/messages",
+            body=issue_2_comments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/messages",
+            body=empty_issue_comments,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/attachments",
-                               body=empty_issue_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/attachments",
-                               body=empty_issue_attachments,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/attachments",
+            body=issue_1_attachments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/attachments",
+            body=empty_issue_attachments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/attachments",
+            body=empty_issue_attachments,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/activity",
-                               body=issue_2_activities,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/activity",
-                               body=empty_issue_activities,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/activity",
+            body=issue_1_activities,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/activity",
+            body=issue_2_activities,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/activity",
+            body=empty_issue_activities,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/~user", body=user_1, status=200
+        )
 
         launchpad = Launchpad('mydistribution', package="mypackage",
                               items_per_page=2)
-        issues = [issues for issues in launchpad.fetch(from_date=None)]
+        issues = list(launchpad.fetch(from_date=None))
 
         issue = issues[0]
         self.assertEqual(launchpad.metadata_id(issue['data']), issue['search_fields']['item_id'])
@@ -413,32 +443,36 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/1", body=issue_1, status=200
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/messages",
+            body=issue_1_comments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/attachments",
+            body=issue_1_attachments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/activity",
+            body=issue_1_activities,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/~user", body=user_1, status=200
+        )
 
         launchpad = Launchpad('mydistribution', package="mypackage", items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
-        issues = [issues for issues in launchpad.fetch(from_date=from_date)]
+        issues = list(launchpad.fetch(from_date=from_date))
         issue_1_expected = json.loads(issue_1_expected)
 
         self.assertEqual(len(issues), 1)
@@ -463,7 +497,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                status=200)
 
         launchpad = Launchpad('mydistribution', package="mypackage", items_per_page=2)
-        issues = [issues for issues in launchpad.fetch()]
+        issues = list(launchpad.fetch())
 
         self.assertListEqual(issues, [])
 
@@ -486,7 +520,7 @@ class TestLaunchpadBackend(unittest.TestCase):
                                status=200)
 
         launchpad = Launchpad('mydistribution', items_per_page=2)
-        issues = [issues for issues in launchpad.fetch()]
+        issues = list(launchpad.fetch())
 
         self.assertListEqual(issues, [])
 
@@ -514,28 +548,33 @@ class TestLaunchpadBackend(unittest.TestCase):
                                body=issues_page_1,
                                status=200)
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/1", body=issue_1, status=200
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
-                               status=410)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
-                               status=410)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
-                               status=410)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/messages",
+            body=issue_1_comments,
+            status=410,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/attachments",
+            body=issue_1_attachments,
+            status=410,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/activity",
+            body=issue_1_activities,
+            status=410,
+        )
 
         issue_1_expected = json.loads(issue_1_expected)
 
         launchpad = Launchpad("mydistribution", package='mypackage', items_per_page=2)
-        issues = [issues for issues in launchpad.fetch()]
+        issues = list(launchpad.fetch())
 
         self.assertDictEqual(issues[0]['data'], issue_1_expected)
 
@@ -612,62 +651,76 @@ class TestLaunchpadBackendArchive(TestCaseBackendArchive):
                                body=issues_page_1,
                                status=200)
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2",
-                               body=issue_2,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3",
-                               body=issue_3,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/1", body=issue_1, status=200
+        )
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/2", body=issue_2, status=200
+        )
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/3", body=issue_3, status=200
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/messages",
-                               body=issue_2_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/messages",
-                               body=empty_issue_comments,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/messages",
+            body=issue_1_comments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/messages",
+            body=issue_2_comments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/messages",
+            body=empty_issue_comments,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/attachments",
-                               body=empty_issue_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/attachments",
-                               body=empty_issue_attachments,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/attachments",
+            body=issue_1_attachments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/attachments",
+            body=empty_issue_attachments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/attachments",
+            body=empty_issue_attachments,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/2/activity",
-                               body=issue_2_activities,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/3/activity",
-                               body=empty_issue_activities,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/activity",
+            body=issue_1_activities,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/2/activity",
+            body=issue_2_activities,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/3/activity",
+            body=empty_issue_activities,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/~user", body=user_1, status=200
+        )
 
         self._test_fetch_from_archive(from_date=None)
 
@@ -695,28 +748,32 @@ class TestLaunchpadBackendArchive(TestCaseBackendArchive):
                                body=issues_page_1,
                                status=200)
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/1", body=issue_1, status=200
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
-                               status=200)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/messages",
+            body=issue_1_comments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/attachments",
+            body=issue_1_attachments,
+            status=200,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/activity",
+            body=issue_1_activities,
+            status=200,
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/~user", body=user_1, status=200
+        )
 
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
         self._test_fetch_from_archive(from_date=from_date)
@@ -788,23 +845,28 @@ class TestLaunchpadBackendArchive(TestCaseBackendArchive):
                                body=issues_page_1,
                                status=200)
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1",
-                               body=issue_1,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/bugs/1", body=issue_1, status=200
+        )
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/messages",
-                               body=issue_1_comments,
-                               status=410)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/attachments",
-                               body=issue_1_attachments,
-                               status=410)
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/1/activity",
-                               body=issue_1_activities,
-                               status=410)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/messages",
+            body=issue_1_comments,
+            status=410,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/attachments",
+            body=issue_1_attachments,
+            status=410,
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/1/activity",
+            body=issue_1_activities,
+            status=410,
+        )
 
         self._test_fetch_from_archive()
 
@@ -855,7 +917,7 @@ class TestLaunchpadClient(unittest.TestCase):
 
         client = LaunchpadClient("mydistribution", package='mypackage', items_per_page=2)
         from_date = datetime.datetime(2018, 8, 21, 16, 0, 0)
-        issues = [issues for issues in client.issues(start=from_date)]
+        issues = list(client.issues(start=from_date))
 
         self.assertEqual(len(issues), 1)
 
@@ -905,7 +967,7 @@ class TestLaunchpadClient(unittest.TestCase):
                                status=200)
 
         client = LaunchpadClient("mydistribution", package="mypackage", items_per_page=2)
-        issues = [issues for issues in client.issues()]
+        issues = list(client.issues())
 
         self.assertEqual(len(issues), 3)
 
@@ -928,7 +990,7 @@ class TestLaunchpadClient(unittest.TestCase):
                                status=200)
 
         client = LaunchpadClient("mydistribution", package="mypackage")
-        issues = [issues for issues in client.issues()]
+        issues = list(client.issues())
 
         self.assertDictEqual(json.loads(issues[0]), json.loads(empty_issues))
 
@@ -937,10 +999,9 @@ class TestLaunchpadClient(unittest.TestCase):
         """Test user API call"""
 
         user = read_file('data/launchpad/launchpad_user_1')
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user",
-                               body=user,
-                               status=200)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/~user", body=user, status=200
+        )
 
         client = LaunchpadClient("mydistribution", package="mypackage")
         user_retrieved = client.user("user")
@@ -951,10 +1012,9 @@ class TestLaunchpadClient(unittest.TestCase):
     def test_user_not_retrieved(self):
         """Test user API call"""
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user-not",
-                               body="",
-                               status=404)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/~user-not", body="", status=404
+        )
 
         client = LaunchpadClient("mydistribution", package="mypackage")
 
@@ -965,10 +1025,12 @@ class TestLaunchpadClient(unittest.TestCase):
     def test_http_wrong_status_issue_collection(self):
         """Test if an empty collection is returned when the http status is not 200"""
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/bugs/100/attachments",
-                               body="",
-                               status=404)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{LAUNCHPAD_API_URL}/bugs/100/attachments",
+            body="",
+            status=404,
+        )
 
         client = LaunchpadClient("mydistribution", package="mypackage")
         with self.assertRaises(requests.exceptions.HTTPError):
@@ -978,10 +1040,9 @@ class TestLaunchpadClient(unittest.TestCase):
     def test_http_wrong_status_user(self):
         """Test if an empty user is returned when the http status is not 200, 404, 410"""
 
-        httpretty.register_uri(httpretty.GET,
-                               LAUNCHPAD_API_URL + "/~user1",
-                               body="",
-                               status=500)
+        httpretty.register_uri(
+            httpretty.GET, f"{LAUNCHPAD_API_URL}/~user1", body="", status=500
+        )
 
         client = LaunchpadClient("mydistribution", package="mypackage")
         with self.assertRaises(requests.exceptions.HTTPError):

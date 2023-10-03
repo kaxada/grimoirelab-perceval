@@ -200,7 +200,7 @@ class TestSlackBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         slack = Slack('C011DUKE8', 'aaaa', max_items=5)
-        messages = [msg for msg in slack.fetch(from_date=None)]
+        messages = list(slack.fetch(from_date=None))
 
         expected = [
             ("<@U0003|dizquierdo> commented on <@U0002|acs> file>: Thanks.",
@@ -305,7 +305,7 @@ class TestSlackBackend(unittest.TestCase):
         setup_http_server()
 
         slack = Slack('C011DUKE8', 'aaaa', max_items=5)
-        messages = [msg for msg in slack.fetch(from_date=None)]
+        messages = list(slack.fetch(from_date=None))
 
         message = messages[0]
         self.assertEqual(slack.metadata_id(message['data']), message['search_fields']['item_id'])
@@ -341,7 +341,7 @@ class TestSlackBackend(unittest.TestCase):
         slack = Slack('C011DUKE8', 'aaaa', max_items=5)
 
         with self.assertLogs(logger, level='WARNING') as cm:
-            messages = [msg for msg in slack.fetch(from_date=None)]
+            messages = list(slack.fetch(from_date=None))
             self.assertEqual(cm.output[0], 'WARNING:perceval.backends.core.slack:'
                                            'channel_info.num_members is None for archived channels C011DUKE8')
 
@@ -444,7 +444,7 @@ class TestSlackBackend(unittest.TestCase):
                                       tzinfo=dateutil.tz.tzutc())
 
         slack = Slack('C011DUKE8', 'aaaa', max_items=5)
-        messages = [msg for msg in slack.fetch(from_date=from_date)]
+        messages = list(slack.fetch(from_date=from_date))
 
         expected = [
             ("There are no events this week.",
@@ -534,7 +534,7 @@ class TestSlackBackend(unittest.TestCase):
                                       tzinfo=dateutil.tz.tzutc())
 
         slack = Slack('C011DUKE8', 'aaaa', max_items=5)
-        messages = [msg for msg in slack.fetch(from_date=from_date)]
+        messages = list(slack.fetch(from_date=from_date))
 
         self.assertEqual(len(messages), 0)
 
@@ -580,7 +580,7 @@ class TestSlackBackend(unittest.TestCase):
         raw_json = read_file('data/slack/slack_history.json')
 
         items, has_more = Slack.parse_history(raw_json)
-        results = [item for item in items]
+        results = list(items)
 
         self.assertEqual(len(results), 7)
         self.assertEqual(results[0]['ts'], '1486999900.000000')
@@ -596,7 +596,7 @@ class TestSlackBackend(unittest.TestCase):
         raw_json = read_file('data/slack/slack_history_empty.json')
 
         items, has_more = Slack.parse_history(raw_json)
-        results = [item for item in items]
+        results = list(items)
 
         self.assertEqual(len(results), 0)
         self.assertEqual(has_more, False)
@@ -844,9 +844,9 @@ class TestSlackClient(unittest.TestCase):
     def test_private_user(self):
 
         user_U0004 = read_file('data/slack/slack_user_U0004_private.json', 'rb')
-        httpretty.register_uri(httpretty.GET,
-                               SLACK_USER_INFO_URL + "?user=U0004",
-                               body=user_U0004)
+        httpretty.register_uri(
+            httpretty.GET, f"{SLACK_USER_INFO_URL}?user=U0004", body=user_U0004
+        )
 
         client = SlackClient('aaaa', max_items=5)
 

@@ -105,9 +105,7 @@ class MediaWiki(Backend):
             from_date = datetime_to_utc(from_date)
 
         kwargs = {"from_date": from_date, "reviews_api": reviews_api}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the pages
@@ -133,8 +131,7 @@ class MediaWiki(Backend):
         else:
             fetcher = self.__fetch_pre1_27(from_date)
 
-        for page_reviews in fetcher:
-            yield page_reviews
+        yield from fetcher
 
     @classmethod
     def has_archiving(cls):
@@ -200,9 +197,7 @@ class MediaWiki(Backend):
         # Only contents namespaces are analyzed in this backend
         raw_namespaces = self.client.get_namespaces()
         namespaces = json.loads(raw_namespaces)["query"]["namespaces"]
-        namespaces_contents = [ns for ns in namespaces if 'content' in namespaces[ns].keys()]
-
-        return namespaces_contents
+        return [ns for ns in namespaces if 'content' in namespaces[ns].keys()]
 
     def __fetch_1_27(self, from_date=None):
         """Fetch the pages from the backend url for MediaWiki >=1.27
@@ -249,8 +244,7 @@ class MediaWiki(Backend):
 
     def __get_page_reviews(self, page):
         revisions_raw = self.client.get_revisions(page['pageid'])
-        page_reviews = self.__build_page_reviews(page, json.loads(revisions_raw))
-        return page_reviews
+        return self.__build_page_reviews(page, json.loads(revisions_raw))
 
     def __fetch_pre1_27(self, from_date=None):
         """Fetch the pages from the backend url.
@@ -481,14 +475,14 @@ class MediaWikiClient(HttpClient):
             siteinfo = siteinfo["query"]["general"]
         except Exception as ex:
             logger.error(ex)
-            cause = "Wrong MediaWiki API: " + self.base_url
+            cause = f"Wrong MediaWiki API: {self.base_url}"
             raise BackendError(cause=cause)
 
         version = siteinfo['generator']
         # MediaWiki 1.28.0-wmf.7, MediaWiki 1.19alpha
         version = version.split(" ")[1]  # Removes MediaWiki
         version_major = int(version.split(".")[0])
-        version_minor = int(version.split(".")[1][0:2])
+        version_minor = int(version.split(".")[1][:2])
 
         return [version_major, version_minor]
 
@@ -563,9 +557,8 @@ class MediaWikiClient(HttpClient):
 
         if arvcontinue:
             params[self.PARV_CONTINUE] = arvcontinue
-        else:
-            if from_date:
-                params[self.PARV_START] = from_date_str
+        elif from_date:
+            params[self.PARV_START] = from_date_str
 
         return self.call(params)
 

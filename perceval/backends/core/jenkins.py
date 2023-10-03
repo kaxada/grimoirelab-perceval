@@ -103,9 +103,7 @@ class Jenkins(Backend):
         """
 
         kwargs = {}
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the contents
@@ -198,24 +196,21 @@ class Jenkins(Backend):
 
     def __get_jobs(self, url):
         jobs_info = json.loads(self.client.get_jobs(url))
-        jobs = jobs_info['jobs']
-
-        return jobs
+        return jobs_info['jobs']
 
     def __get_builds(self, job, url):
         builds = []
         try:
             raw_builds = self.client.get_builds(job['name'], url)
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 500:
-                logger.warning(e)
-                logger.warning("Unable to fetch builds from job %s; skipping",
-                               job['url'])
-                self.summary.skipped += 1
-                return builds
-            else:
+            if e.response.status_code != 500:
                 raise e
 
+            logger.warning(e)
+            logger.warning("Unable to fetch builds from job %s; skipping",
+                           job['url'])
+            self.summary.skipped += 1
+            return builds
         if not raw_builds:
             self.summary.skipped += 1
             return builds

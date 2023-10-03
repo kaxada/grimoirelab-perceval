@@ -97,7 +97,7 @@ def months_range(from_date, to_date):
 
     month_gen = dateutil.rrule.rrule(freq=dateutil.rrule.MONTHLY,
                                      dtstart=start, until=end)
-    months = [d for d in month_gen]
+    months = list(month_gen)
 
     pos = 0
     for x in range(1, len(months)):
@@ -208,11 +208,13 @@ def remove_invalid_xml_chars(raw_xml):
     illegal_unichrs = [(0x00, 0x08), (0x0B, 0x1F),
                        (0x7F, 0x84), (0x86, 0x9F)]
 
-    illegal_ranges = ['%s-%s' % (chr(low), chr(high))
-                      for (low, high) in illegal_unichrs
-                      if low < sys.maxunicode]
+    illegal_ranges = [
+        f'{chr(low)}-{chr(high)}'
+        for (low, high) in illegal_unichrs
+        if low < sys.maxunicode
+    ]
 
-    illegal_xml_re = re.compile('[%s]' % ''.join(illegal_ranges))
+    illegal_xml_re = re.compile(f"[{''.join(illegal_ranges)}]")
 
     purged_xml = ''
 
@@ -265,7 +267,7 @@ def xml_to_dict(raw_xml):
     try:
         tree = xml.etree.ElementTree.fromstring(purged_xml)
     except xml.etree.ElementTree.ParseError as e:
-        cause = "XML stream %s" % (str(e))
+        cause = f"XML stream {str(e)}"
         raise ParseError(cause=cause)
 
     d = node_to_dict(tree)

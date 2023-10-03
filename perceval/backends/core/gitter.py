@@ -91,15 +91,12 @@ class Gitter(Backend):
 
         :returns: a dict of search fields
         """
-        search_fields = {
+        return {
             DEFAULT_SEARCH_FIELD: self.metadata_id(item),
             'group': self.group,
             'room': self.room,
-            'room_id': self.room_id
-
+            'room_id': self.room_id,
         }
-
-        return search_fields
 
     def fetch(self, category=CATEGORY_MESSAGE, from_date=DEFAULT_DATETIME):
         """Fetch the messages from the room.
@@ -120,9 +117,7 @@ class Gitter(Backend):
             'from_date': from_date,
         }
 
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages.
@@ -146,7 +141,7 @@ class Gitter(Backend):
         self.room_id = self.client.get_room_id(room)
 
         if not self.room_id:
-            msg = "Room id not found for room %s" % room
+            msg = f"Room id not found for room {room}"
             logger.error(msg)
 
             raise BackendError(cause=msg)
@@ -275,9 +270,7 @@ class GitterClient(HttpClient, RateLimitHandler):
         current_epoch = (datetime_utcnow().replace(microsecond=0).timestamp() + 1) * 1000
         time_to_reset = (self.rate_limit_reset_ts - current_epoch) / 1000
 
-        if time_to_reset < 0:
-            time_to_reset = 0
-
+        time_to_reset = max(time_to_reset, 0)
         return time_to_reset
 
     def fetch(self, url, payload=None, headers=None):
@@ -289,9 +282,7 @@ class GitterClient(HttpClient, RateLimitHandler):
 
         :returns a response object
         """
-        headers = {
-            self.HAUTHORIZATION: 'Bearer {}'.format(self.api_token)
-        }
+        headers = {self.HAUTHORIZATION: f'Bearer {self.api_token}'}
 
         logger.debug("Gitter client message request with params: %s", str(payload))
 
@@ -326,11 +317,10 @@ class GitterClient(HttpClient, RateLimitHandler):
         path = urijoin(GITTER_API_URL, self.RROOMS)
         rooms = self.fetch(path)
         rooms = rooms.json()
-        for raw_room in rooms:
-            if raw_room['name'] == room:
-                return raw_room['id']
-
-        return None
+        return next(
+            (raw_room['id'] for raw_room in rooms if raw_room['name'] == room),
+            None,
+        )
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):

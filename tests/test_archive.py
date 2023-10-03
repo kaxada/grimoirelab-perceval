@@ -43,7 +43,7 @@ from perceval.errors import ArchiveError, ArchiveManagerError
 def count_number_rows(db, table_name):
     conn = sqlite3.connect(db)
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM " + table_name)
+    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
     nrows = cursor.fetchone()[0]
     cursor.close()
     return nrows
@@ -89,7 +89,7 @@ class TestArchive(unittest.TestCase):
         archive_path = os.path.join(self.test_path, 'myarchive')
         Archive.create(archive_path)
 
-        with self.assertRaisesRegex(ArchiveError, "archive %s already exists" % archive_path):
+        with self.assertRaisesRegex(ArchiveError, f"archive {archive_path} already exists"):
             Archive.create(archive_path)
 
     def test_init(self):
@@ -112,7 +112,7 @@ class TestArchive(unittest.TestCase):
 
         archive_path = os.path.join(self.test_path, 'myarchive')
 
-        with self.assertRaisesRegex(ArchiveError, "archive %s does not exist" % archive_path):
+        with self.assertRaisesRegex(ArchiveError, f"archive {archive_path} does not exist"):
             _ = Archive(archive_path)
 
     def test_init_not_valid_archive(self):

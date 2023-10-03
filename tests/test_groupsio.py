@@ -150,7 +150,7 @@ class TestGroupsioBackend(unittest.TestCase):
         setup_http_server()
 
         backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         self.assertEqual(len(messages), 49)
 
@@ -185,7 +185,7 @@ class TestGroupsioBackend(unittest.TestCase):
         setup_http_server()
 
         backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         for message in messages:
             self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
@@ -200,7 +200,7 @@ class TestGroupsioBackend(unittest.TestCase):
         from_date = datetime.datetime(2018, 5, 5)
 
         backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
 
         self.assertEqual(len(messages), 8)
 
@@ -235,7 +235,7 @@ class TestGroupsioBackend(unittest.TestCase):
         setup_http_server(empty_mbox=True)
 
         backend = Groupsio('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa')
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         self.assertListEqual(messages, [])
 
@@ -425,7 +425,7 @@ class TestGroupsioClient(unittest.TestCase):
         setup_http_server()
 
         client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', ssl_verify=False)
-        subs = [subs for subs in client.subscriptions(per_page=1)]
+        subs = list(client.subscriptions(per_page=1))
         self.assertEqual(len(subs), 2)
 
     @httpretty.activate
@@ -437,7 +437,7 @@ class TestGroupsioClient(unittest.TestCase):
         client = GroupsioClient('beta+api', self.tmp_path, 'jsmith@example.com', 'aaaaa', ssl_verify=False)
 
         with self.assertRaises(requests.exceptions.HTTPError):
-            _ = [subs for subs in client.subscriptions(per_page=1)]
+            _ = list(client.subscriptions(per_page=1))
 
 
 class TestGroupsioCommand(unittest.TestCase):

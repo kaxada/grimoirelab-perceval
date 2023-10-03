@@ -123,11 +123,9 @@ class Meetup(Backend):
         from_date = datetime_to_utc(from_date)
 
         kwargs = {"from_date": from_date, "to_date": to_date}
-        items = super().fetch(category,
-                              filter_classified=filter_classified,
-                              **kwargs)
-
-        return items
+        return super().fetch(
+            category, filter_classified=filter_classified, **kwargs
+        )
 
     def fetch_items(self, category, **kwargs):
         """Fetch the events
@@ -152,7 +150,7 @@ class Meetup(Backend):
         ev_pages = self.client.events(self.group, from_date=from_date)
 
         for evp in ev_pages:
-            events = [event for event in self.parse_json(evp)]
+            events = list(self.parse_json(evp))
 
             for event in events:
                 event_id = event['id']
@@ -210,9 +208,7 @@ class Meetup(Backend):
         """
         # Time is in milliseconds, convert it to seconds
         ts = item['updated']
-        ts = ts / 1000.0
-
-        return ts
+        return ts / 1000.0
 
     @staticmethod
     def metadata_category(item):
@@ -234,8 +230,7 @@ class Meetup(Backend):
 
         :returns: a list with the parsed data
         """
-        result = json.loads(raw_json)
-        return result
+        return json.loads(raw_json)
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -253,9 +248,7 @@ class Meetup(Backend):
 
         for raw_page in raw_pages:
 
-            for comment in self.parse_json(raw_page):
-                comments.append(comment)
-
+            comments.extend(iter(self.parse_json(raw_page)))
         return comments
 
     def __fetch_and_parse_rsvps(self, event_id):
@@ -267,9 +260,7 @@ class Meetup(Backend):
 
         for raw_page in raw_pages:
 
-            for rsvp in self.parse_json(raw_page):
-                rsvps.append(rsvp)
-
+            rsvps.extend(iter(self.parse_json(raw_page)))
         return rsvps
 
 
@@ -364,8 +355,7 @@ class MeetupClient(HttpClient, RateLimitHandler):
     def calculate_time_to_reset(self):
         """Number of seconds to wait. They are contained in the rate limit reset header"""
 
-        time_to_reset = 0 if self.rate_limit_reset_ts < 0 else self.rate_limit_reset_ts
-        return time_to_reset
+        return max(self.rate_limit_reset_ts, 0)
 
     def events(self, group, from_date=DEFAULT_DATETIME):
         """Fetch the events pages of a given group."""
@@ -381,8 +371,8 @@ class MeetupClient(HttpClient, RateLimitHandler):
         # Morever, urrlib3 encodes comma characters when values
         # are given using params dict, which it doesn't work
         # with Meetup, either.
-        fixed_params = '?' + self.PFIELDS + '=' + ','.join(self.VEVENT_FIELDS)
-        fixed_params += '&' + self.PSTATUS + '=' + ','.join(self.VSTATUS)
+        fixed_params = f'?{self.PFIELDS}=' + ','.join(self.VEVENT_FIELDS)
+        fixed_params += f'&{self.PSTATUS}=' + ','.join(self.VSTATUS)
         resource += fixed_params
 
         params = {
@@ -392,14 +382,12 @@ class MeetupClient(HttpClient, RateLimitHandler):
         }
 
         try:
-            for page in self._fetch(resource, params):
-                yield page
+            yield from self._fetch(resource, params)
         except requests.exceptions.HTTPError as error:
-            if error.response.status_code == 410:
-                msg = "Group is no longer accessible: {}".format(error)
-                raise RepositoryError(cause=msg)
-            else:
+            if error.response.status_code != 410:
                 raise error
+            msg = f"Group is no longer accessible: {error}"
+            raise RepositoryError(cause=msg)
 
     def comments(self, group, event_id):
         """Fetch the comments of a given event."""
@@ -410,8 +398,7 @@ class MeetupClient(HttpClient, RateLimitHandler):
             self.PPAGE: self.max_items
         }
 
-        for page in self._fetch(resource, params):
-            yield page
+        yield from self._fetch(resource, params)
 
     def rsvps(self, group, event_id):
         """Fetch the rsvps of a given event."""
@@ -419,16 +406,15 @@ class MeetupClient(HttpClient, RateLimitHandler):
         resource = urijoin(group, self.REVENTS, event_id, self.RRSVPS)
 
         # Same hack that in 'events' method
-        fixed_params = '?' + self.PFIELDS + '=' + ','.join(self.VRSVP_FIELDS)
-        fixed_params += '&' + self.PRESPONSE + '=' + ','.join(self.VRESPONSE)
+        fixed_params = f'?{self.PFIELDS}=' + ','.join(self.VRSVP_FIELDS)
+        fixed_params += f'&{self.PRESPONSE}=' + ','.join(self.VRESPONSE)
         resource += fixed_params
 
         params = {
             self.PPAGE: self.max_items
         }
 
-        for page in self._fetch(resource, params):
-            yield page
+        yield from self._fetch(resource, params)
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):
@@ -457,9 +443,7 @@ class MeetupClient(HttpClient, RateLimitHandler):
         :returns: a generator of pages for the requeste resource
         """
         url = urijoin(self.base_url, resource)
-        headers = {
-            self.PKEY_OAUTH2: 'Bearer {}'.format(self.api_token)
-        }
+        headers = {self.PKEY_OAUTH2: f'Bearer {self.api_token}'}
 
         do_fetch = True
 

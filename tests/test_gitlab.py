@@ -54,25 +54,33 @@ from perceval.backends.core.gitlab import (logger,
 from base import TestCaseBackendArchive
 
 GITLAB_URL = "https://gitlab.com"
-GITLAB_API_URL = GITLAB_URL + "/api/v4"
+GITLAB_API_URL = f"{GITLAB_URL}/api/v4"
 
 GITLAB_PRJ = "fdroid%2Ffdroiddata"
-GITLAB_URL_PROJECT = "{}/projects/{}".format(GITLAB_API_URL, GITLAB_PRJ)
-GITLAB_ISSUES_URL = "{}/projects/{}/issues".format(GITLAB_API_URL, GITLAB_PRJ)
-GITLAB_MERGES_URL = "{}/projects/{}/merge_requests".format(GITLAB_API_URL, GITLAB_PRJ)
+GITLAB_URL_PROJECT = f"{GITLAB_API_URL}/projects/{GITLAB_PRJ}"
+GITLAB_ISSUES_URL = f"{GITLAB_API_URL}/projects/{GITLAB_PRJ}/issues"
+GITLAB_MERGES_URL = f"{GITLAB_API_URL}/projects/{GITLAB_PRJ}/merge_requests"
 
 GITLAB_PRJ_GRP = "fdroid%2Ffdroiddata%2Futils"
-GITLAB_URL_PROJECT_GRP = "{}/projects/{}".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
-GITLAB_ISSUES_URL_GRP = "{}/projects/{}/issues".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
-GITLAB_MERGES_URL_GRP = "{}/projects/{}/merge_requests".format(GITLAB_API_URL, GITLAB_PRJ_GRP)
+GITLAB_URL_PROJECT_GRP = f"{GITLAB_API_URL}/projects/{GITLAB_PRJ_GRP}"
+GITLAB_ISSUES_URL_GRP = f"{GITLAB_API_URL}/projects/{GITLAB_PRJ_GRP}/issues"
+GITLAB_MERGES_URL_GRP = (
+    f"{GITLAB_API_URL}/projects/{GITLAB_PRJ_GRP}/merge_requests"
+)
 
 GITLAB_ENTERPRISE_URL = "https://gitlab.ow2.org"
-GITLAB_ENTERPRISE_API_URL = GITLAB_ENTERPRISE_URL + "/api/v4"
+GITLAB_ENTERPRISE_API_URL = f"{GITLAB_ENTERPRISE_URL}/api/v4"
 
 GITLAB_ENT_PRJ = "am%2Ftest"
-GITLAB_ENTERPRISE_URL_PROJECT = "{}/projects/{}".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
-GITLAB_ENTERPRISE_ISSUES_URL = "{}/projects/{}/issues".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
-GITLAB_ENTERPRISE_MERGES_URL = "{}/projects/{}/merge_requests".format(GITLAB_ENTERPRISE_API_URL, GITLAB_ENT_PRJ)
+GITLAB_ENTERPRISE_URL_PROJECT = (
+    f"{GITLAB_ENTERPRISE_API_URL}/projects/{GITLAB_ENT_PRJ}"
+)
+GITLAB_ENTERPRISE_ISSUES_URL = (
+    f"{GITLAB_ENTERPRISE_API_URL}/projects/{GITLAB_ENT_PRJ}/issues"
+)
+GITLAB_ENTERPRISE_MERGES_URL = (
+    f"{GITLAB_ENTERPRISE_API_URL}/projects/{GITLAB_ENT_PRJ}/merge_requests"
+)
 
 
 def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=None, no_attr_last=False):
@@ -92,21 +100,21 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
                            forcing_headers=rate_limit_headers)
 
     if no_attr_last:
-        pagination_issue_header = {'Link': '<' + issues_url +
-                                           '/?&page=2>; rel="next", <' + issues_url +
-                                           '/?&page=3>;'}
+        pagination_issue_header = {
+            'Link': f'<{issues_url}/?&page=2>; rel="next", <{issues_url}/?&page=3>;'
+        }
 
-        pagination_merge_header = {'Link': '<' + merges_url +
-                                           '/?&page=2>; rel="next", <' + merges_url +
-                                           '/?&page=3>;'}
+        pagination_merge_header = {
+            'Link': f'<{merges_url}/?&page=2>; rel="next", <{merges_url}/?&page=3>;'
+        }
     else:
-        pagination_issue_header = {'Link': '<' + issues_url +
-                                   '/?&page=2>; rel="next", <' + issues_url +
-                                   '/?&page=3>; rel="last"'}
+        pagination_issue_header = {
+            'Link': f'<{issues_url}/?&page=2>; rel="next", <{issues_url}/?&page=3>; rel="last"'
+        }
 
-        pagination_merge_header = {'Link': '<' + merges_url +
-                                           '/?&page=2>; rel="next", <' + merges_url +
-                                           '/?&page=3>; rel="last"'}
+        pagination_merge_header = {
+            'Link': f'<{merges_url}/?&page=2>; rel="next", <{merges_url}/?&page=3>; rel="last"'
+        }
 
     # pagination
     pagination_issue_header.update(rate_limit_headers)
@@ -116,11 +124,13 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
                            status=200,
                            forcing_headers=pagination_issue_header)
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + '/?&page=2',
-                           body=page_issues_2,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f'{issues_url}/?&page=2',
+        body=page_issues_2,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
     pagination_merge_header.update(rate_limit_headers)
     httpretty.register_uri(httpretty.GET,
@@ -129,11 +139,13 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
                            status=200,
                            forcing_headers=pagination_merge_header)
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + '/?&page=2',
-                           body=page_merges_2,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f'{merges_url}/?&page=2',
+        body=page_merges_2,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
     notes_1 = read_file('data/gitlab/notes_1')
     notes_2 = read_file('data/gitlab/notes_2')
@@ -141,48 +153,62 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
     notes_4 = read_file('data/gitlab/notes_4')
 
     # issue notes
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/1/notes",
-                           body=notes_1,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/1/notes",
+        body=notes_1,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/2/notes",
-                           body=notes_2,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/2/notes",
+        body=notes_2,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/3/notes",
-                           body=notes_3,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/3/notes",
+        body=notes_3,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/4/notes",
-                           body=notes_4,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/4/notes",
+        body=notes_4,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
     # merge notes
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/notes",
-                           body=notes_1,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/notes",
+        body=notes_1,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2/notes",
-                           body=notes_2,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2/notes",
+        body=notes_2,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/3/notes",
-                           body=notes_3,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/3/notes",
+        body=notes_3,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
     emoji = read_file('data/gitlab/emoji')
     empty_emoji = read_file('data/gitlab/empty_emoji')
@@ -192,46 +218,58 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
     merge_2 = read_file('data/gitlab/merge_2')
     merge_3 = read_file('data/gitlab/merge_3')
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1",
-                           body=merge_1,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1",
+        body=merge_1,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2",
-                           body=merge_2,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2",
+        body=merge_2,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/3",
-                           body=merge_3,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/3",
+        body=merge_3,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
     # merge versions
     merge_1_versions = read_file('data/gitlab/merge_1_versions')
     merge_2_versions = read_file('data/gitlab/merge_2_versions')
     merge_3_versions = read_file('data/gitlab/merge_3_versions')
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/versions",
-                           body=merge_1_versions,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/versions",
+        body=merge_1_versions,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2/versions",
-                           body=merge_2_versions,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2/versions",
+        body=merge_2_versions,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/3/versions",
-                           body=merge_3_versions,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/3/versions",
+        body=merge_3_versions,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
     # merge version details
     merge_1_version_1 = read_file('data/gitlab/merge_1_version_1')
@@ -239,127 +277,167 @@ def setup_http_server(url_project, issues_url, merges_url, rate_limit_headers=No
     merge_2_version_1 = read_file('data/gitlab/merge_2_version_1')
     merge_3_version_1 = read_file('data/gitlab/merge_3_version_1')
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/versions/1",
-                           body=merge_1_version_1,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/versions/1",
+        body=merge_1_version_1,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/versions/2",
-                           body=merge_1_version_2,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/versions/2",
+        body=merge_1_version_2,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2/versions/3",
-                           body=merge_2_version_1,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2/versions/3",
+        body=merge_2_version_1,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/3/versions/4",
-                           body=merge_3_version_1,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/3/versions/4",
+        body=merge_3_version_1,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
     # issue emojis
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/1/award_emoji",
-                           body=emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/1/award_emoji",
+        body=emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/2/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/2/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/3/award_emoji",
-                           body=emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/3/award_emoji",
+        body=emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/4/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/4/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/1/notes/1/award_emoji",
-                           body=emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/1/notes/1/award_emoji",
+        body=emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/1/notes/2/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/1/notes/2/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/2/notes/1/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/2/notes/1/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/3/notes/1/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/3/notes/1/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           issues_url + "/4/notes/1/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{issues_url}/4/notes/1/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
     # merge requests emojis
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/award_emoji",
-                           body=emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/award_emoji",
+        body=emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/3/award_emoji",
-                           body=emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/3/award_emoji",
+        body=emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/notes/1/award_emoji",
-                           body=emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/notes/1/award_emoji",
+        body=emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/notes/2/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/notes/2/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2/notes/1/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2/notes/1/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/3/notes/1/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=rate_limit_headers)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/3/notes/1/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=rate_limit_headers,
+    )
 
 
 def setup_gitlab_outdated_mrs_server(url_project, merges_url):
@@ -374,9 +452,9 @@ def setup_gitlab_outdated_mrs_server(url_project, merges_url):
     empty_versions = read_file('data/gitlab/empty_response')
     empty_emoji = read_file('data/gitlab/empty_response')
 
-    pagination_merge_header = {'Link': '<' + merges_url +
-                               '/?&page=2>; rel="next", <' + merges_url +
-                               '/?&page=2>; rel="last"'}
+    pagination_merge_header = {
+        'Link': f'<{merges_url}/?&page=2>; rel="next", <{merges_url}/?&page=2>; rel="last"'
+    }
 
     httpretty.register_uri(httpretty.GET,
                            url_project,
@@ -390,46 +468,62 @@ def setup_gitlab_outdated_mrs_server(url_project, merges_url):
                                httpretty.Response(body=page_merges_updated)
                            ],
                            forcing_headers=pagination_merge_header)
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/notes",
-                           body=empty_notes,
-                           status=200,
-                           forcing_headers=None)
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2/notes",
-                           body=empty_notes,
-                           status=200,
-                           forcing_headers=None)
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1",
-                           body=merge_1,
-                           status=200,
-                           forcing_headers=None)
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2",
-                           body=merge_2,
-                           status=200,
-                           forcing_headers=None)
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/versions",
-                           body=empty_versions,
-                           status=200,
-                           forcing_headers=None)
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2/versions",
-                           body=empty_versions,
-                           status=200,
-                           forcing_headers=None)
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/1/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=None)
-    httpretty.register_uri(httpretty.GET,
-                           merges_url + "/2/award_emoji",
-                           body=empty_emoji,
-                           status=200,
-                           forcing_headers=None)
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/notes",
+        body=empty_notes,
+        status=200,
+        forcing_headers=None,
+    )
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2/notes",
+        body=empty_notes,
+        status=200,
+        forcing_headers=None,
+    )
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1",
+        body=merge_1,
+        status=200,
+        forcing_headers=None,
+    )
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2",
+        body=merge_2,
+        status=200,
+        forcing_headers=None,
+    )
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/versions",
+        body=empty_versions,
+        status=200,
+        forcing_headers=None,
+    )
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2/versions",
+        body=empty_versions,
+        status=200,
+        forcing_headers=None,
+    )
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/1/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=None,
+    )
+    httpretty.register_uri(
+        httpretty.GET,
+        f"{merges_url}/2/award_emoji",
+        body=empty_emoji,
+        status=200,
+        forcing_headers=None,
+    )
 
 
 def read_file(filename, mode='r'):
@@ -453,7 +547,7 @@ class TestGitLabBackend(unittest.TestCase):
 
         self.assertEqual(gitlab.owner, 'fdroid')
         self.assertEqual(gitlab.repository, 'fdroiddata')
-        self.assertEqual(gitlab.origin, GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(gitlab.origin, f'{GITLAB_URL}/fdroid/fdroiddata')
         self.assertEqual(gitlab.tag, 'test')
         self.assertIsNone(gitlab.client)
         self.assertIsNone(gitlab.blacklist_ids)
@@ -469,8 +563,8 @@ class TestGitLabBackend(unittest.TestCase):
 
         self.assertEqual(gitlab.owner, 'fdroid')
         self.assertEqual(gitlab.repository, 'fdroiddata')
-        self.assertEqual(gitlab.origin, GITLAB_URL + '/fdroid/fdroiddata')
-        self.assertEqual(gitlab.tag, GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(gitlab.origin, f'{GITLAB_URL}/fdroid/fdroiddata')
+        self.assertEqual(gitlab.tag, f'{GITLAB_URL}/fdroid/fdroiddata')
         self.assertIsNone(gitlab.client)
         self.assertEqual(gitlab.max_retries, 10)
         self.assertEqual(gitlab.sleep_time, 100)
@@ -484,7 +578,7 @@ class TestGitLabBackend(unittest.TestCase):
 
         self.assertEqual(gitlab.owner, 'fdroid')
         self.assertEqual(gitlab.repository, 'fdroiddata')
-        self.assertEqual(gitlab.origin, GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(gitlab.origin, f'{GITLAB_URL}/fdroid/fdroiddata')
         self.assertEqual(gitlab.tag, 'test')
         self.assertIsNone(gitlab.client)
         self.assertIsNone(gitlab.blacklist_ids)
@@ -503,7 +597,7 @@ class TestGitLabBackend(unittest.TestCase):
 
         self.assertEqual(gitlab.owner, 'fdroid')
         self.assertEqual(gitlab.repository, 'fdroiddata')
-        self.assertEqual(gitlab.origin, GITLAB_URL + '/fdroid/fdroiddata')
+        self.assertEqual(gitlab.origin, f'{GITLAB_URL}/fdroid/fdroiddata')
         self.assertEqual(gitlab.tag, 'test')
         self.assertIsNone(gitlab.client)
         self.assertIsNone(gitlab.blacklist_ids)
@@ -526,8 +620,8 @@ class TestGitLabBackend(unittest.TestCase):
 
         self.assertEqual(gitlab.owner, 'am')
         self.assertEqual(gitlab.repository, 'test')
-        self.assertEqual(gitlab.origin, GITLAB_ENTERPRISE_URL + "/am/test")
-        self.assertEqual(gitlab.tag, GITLAB_ENTERPRISE_URL + "/am/test")
+        self.assertEqual(gitlab.origin, f"{GITLAB_ENTERPRISE_URL}/am/test")
+        self.assertEqual(gitlab.tag, f"{GITLAB_ENTERPRISE_URL}/am/test")
         self.assertIsNone(gitlab.client)
 
     def test_has_archiving(self):

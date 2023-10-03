@@ -49,17 +49,17 @@ from base import TestCaseBackendArchive
 warnings.filterwarnings("ignore")
 
 MEETUP_URL = 'https://api.meetup.com'
-MEETUP_GROUP_URL = MEETUP_URL + '/sqlpass-es'
-MEETUP_EVENTS_URL = MEETUP_GROUP_URL + '/events'
-MEETUP_EVENT_1_URL = MEETUP_EVENTS_URL + '/1'
-MEETUP_EVENT_2_URL = MEETUP_EVENTS_URL + '/2'
-MEETUP_EVENT_3_URL = MEETUP_EVENTS_URL + '/3'
-MEETUP_EVENT_1_COMMENTS_URL = MEETUP_EVENT_1_URL + '/comments'
-MEETUP_EVENT_2_COMMENTS_URL = MEETUP_EVENT_2_URL + '/comments'
-MEETUP_EVENT_3_COMMENTS_URL = MEETUP_EVENT_3_URL + '/comments'
-MEETUP_EVENT_1_RSVPS_URL = MEETUP_EVENT_1_URL + '/rsvps'
-MEETUP_EVENT_2_RSVPS_URL = MEETUP_EVENT_2_URL + '/rsvps'
-MEETUP_EVENT_3_RSVPS_URL = MEETUP_EVENT_3_URL + '/rsvps'
+MEETUP_GROUP_URL = f'{MEETUP_URL}/sqlpass-es'
+MEETUP_EVENTS_URL = f'{MEETUP_GROUP_URL}/events'
+MEETUP_EVENT_1_URL = f'{MEETUP_EVENTS_URL}/1'
+MEETUP_EVENT_2_URL = f'{MEETUP_EVENTS_URL}/2'
+MEETUP_EVENT_3_URL = f'{MEETUP_EVENTS_URL}/3'
+MEETUP_EVENT_1_COMMENTS_URL = f'{MEETUP_EVENT_1_URL}/comments'
+MEETUP_EVENT_2_COMMENTS_URL = f'{MEETUP_EVENT_2_URL}/comments'
+MEETUP_EVENT_3_COMMENTS_URL = f'{MEETUP_EVENT_3_URL}/comments'
+MEETUP_EVENT_1_RSVPS_URL = f'{MEETUP_EVENT_1_URL}/rsvps'
+MEETUP_EVENT_2_RSVPS_URL = f'{MEETUP_EVENT_2_URL}/rsvps'
+MEETUP_EVENT_3_RSVPS_URL = f'{MEETUP_EVENT_3_URL}/rsvps'
 
 MEETUP_COMMENTS_URL = [
     MEETUP_EVENT_1_COMMENTS_URL,
@@ -124,7 +124,7 @@ def setup_http_server(rate_limit=-1, reset_rate_limit=-1):
 
                 if events_bodies:
                     # Mock the 'Link' header with a fake URL
-                    headers['Link'] = '<' + MEETUP_EVENTS_URL + '>; rel="next"'
+                    headers['Link'] = f'<{MEETUP_EVENTS_URL}>; rel="next"'
 
                 if rate_limit != -1:
                     headers['X-RateLimit-Remaining'] = str(rate_limit)
@@ -221,7 +221,7 @@ class TestMeetupBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
-        events = [event for event in meetup.fetch(from_date=None)]
+        events = list(meetup.fetch(from_date=None))
 
         expected = [('1', '0d07fe36f994a6c78dfcf60fb73674bcf158cb5a', 1460065164.0, 2, 3),
                     ('2', '24b47b622eb33965676dd951b18eea7689b1d81c', 1465503498.0, 2, 3),
@@ -298,7 +298,7 @@ class TestMeetupBackend(unittest.TestCase):
         from_date = datetime.datetime(2016, 9, 25)
 
         meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
-        events = [event for event in meetup.fetch(from_date=from_date)]
+        events = list(meetup.fetch(from_date=from_date))
 
         expected = [('3', 'a42b7cf556c17b17f05b951e2eb5e07a7cb0a731', 1474842748.0, 2, 3)]
 
@@ -351,7 +351,7 @@ class TestMeetupBackend(unittest.TestCase):
         to_date = datetime.datetime(2016, 9, 25)
 
         meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
-        events = [event for event in meetup.fetch(to_date=to_date)]
+        events = list(meetup.fetch(to_date=to_date))
 
         expected = [('1', '0d07fe36f994a6c78dfcf60fb73674bcf158cb5a', 1460065164.0, 2, 3),
                     ('2', '24b47b622eb33965676dd951b18eea7689b1d81c', 1465503498.0, 2, 3)]
@@ -427,8 +427,7 @@ class TestMeetupBackend(unittest.TestCase):
         to_date = datetime.datetime(2016, 9, 25)
 
         meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
-        events = [event for event in meetup.fetch(from_date=from_date,
-                                                  to_date=to_date)]
+        events = list(meetup.fetch(from_date=from_date, to_date=to_date))
 
         self.assertEqual(len(events), 1)
 
@@ -475,7 +474,7 @@ class TestMeetupBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
-        events = [event for event in meetup.fetch(from_date=None, filter_classified=True)]
+        events = list(meetup.fetch(from_date=None, filter_classified=True))
 
         expected = [('1', '0d07fe36f994a6c78dfcf60fb73674bcf158cb5a', 1460065164.0, 2, 3),
                     ('2', '24b47b622eb33965676dd951b18eea7689b1d81c', 1465503498.0, 2, 3),
@@ -555,7 +554,7 @@ class TestMeetupBackend(unittest.TestCase):
         http_requests = setup_http_server()
 
         meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
-        events = [event for event in meetup.fetch(from_date=None)]
+        events = list(meetup.fetch(from_date=None))
 
         event = events[0]
         self.assertEqual(meetup.metadata_id(event['data']), event['search_fields']['item_id'])
@@ -587,7 +586,7 @@ class TestMeetupBackend(unittest.TestCase):
         from_date = datetime.datetime(2017, 1, 1)
 
         meetup = Meetup('sqlpass-es', 'aaaa', max_items=2)
-        events = [event for event in meetup.fetch(from_date=from_date)]
+        events = list(meetup.fetch(from_date=from_date))
 
         self.assertEqual(len(events), 0)
 
@@ -610,7 +609,7 @@ class TestMeetupBackend(unittest.TestCase):
         raw_json = read_file('data/meetup/meetup_events.json')
 
         items = Meetup.parse_json(raw_json)
-        results = [item for item in items]
+        results = list(items)
 
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0]['id'], '1')
@@ -620,7 +619,7 @@ class TestMeetupBackend(unittest.TestCase):
         raw_json = read_file('data/meetup/meetup_events_empty.json')
 
         items = Meetup.parse_json(raw_json)
-        results = [item for item in items]
+        results = list(items)
 
         self.assertEqual(len(results), 0)
 
@@ -784,7 +783,7 @@ class TestMeetupClient(unittest.TestCase):
         events = client.events('sqlpass-es')
 
         with self.assertRaises(RepositoryError):
-            _ = [event for event in events]
+            _ = list(events)
 
     @httpretty.activate
     def test_events_error(self):
@@ -799,7 +798,7 @@ class TestMeetupClient(unittest.TestCase):
         events = client.events('sqlpass-es')
 
         with self.assertRaises(requests.exceptions.HTTPError):
-            _ = [event for event in events]
+            _ = list(events)
 
     @httpretty.activate
     def test_events(self):
@@ -813,7 +812,7 @@ class TestMeetupClient(unittest.TestCase):
 
         # Call API
         events = client.events('sqlpass-es', from_date=from_date)
-        result = [event for event in events]
+        result = list(events)
 
         self.assertEqual(len(result), 2)
 
@@ -851,7 +850,7 @@ class TestMeetupClient(unittest.TestCase):
 
         # Call API
         comments = client.comments('sqlpass-es', '1')
-        result = [comment for comment in comments]
+        result = list(comments)
 
         self.assertEqual(len(result), 1)
 
@@ -877,7 +876,7 @@ class TestMeetupClient(unittest.TestCase):
 
         # Call API
         rsvps = client.rsvps('sqlpass-es', '1')
-        result = [rsvp for rsvp in rsvps]
+        result = list(rsvps)
 
         self.assertEqual(len(result), 1)
 
@@ -922,7 +921,7 @@ class TestMeetupClient(unittest.TestCase):
         # Call API
         before = float(time.time())
         events = client.events('sqlpass-es')
-        results = [event for event in events]
+        results = list(events)
         after = float(time.time())
         diff = after - before
 
@@ -966,7 +965,7 @@ class TestMeetupClient(unittest.TestCase):
         events = client.events('sqlpass-es')
 
         with self.assertRaises(RateLimitError):
-            _ = [event for event in events]
+            _ = list(events)
 
         expected = {
             'fields': ['event_hosts,featured,group_topics,plain_text_description,rsvpable,series'],
@@ -994,11 +993,13 @@ class TestMeetupClient(unittest.TestCase):
 
         client = MeetupClient('aaaa', max_items=2, sleep_time=0.1)
         start = float(time.time())
-        expected = start + (sum([i * client.sleep_time for i in range(client.MAX_RETRIES)]))
+        expected = start + sum(
+            i * client.sleep_time for i in range(client.MAX_RETRIES)
+        )
 
         events = client.events('sqlpass-es')
         with self.assertRaises(requests.exceptions.RetryError):
-            _ = [event for event in events]
+            _ = list(events)
 
         end = float(time.time())
         self.assertGreater(end, expected)

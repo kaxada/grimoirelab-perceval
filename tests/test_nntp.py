@@ -105,7 +105,7 @@ class TestNNTPBackend(unittest.TestCase):
     def test_initialization(self):
         """Test whether attributes are initializated"""
 
-        expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
+        expected_origin = f'{NNTP_SERVER}-{NNTP_GROUP}'
 
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP, tag='test')
         self.assertEqual(nntp.host, NNTP_SERVER)
@@ -147,7 +147,7 @@ class TestNNTPBackend(unittest.TestCase):
         mock_nntp.return_value = MockNNTPLib()
 
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
-        articles = [article for article in nntp.fetch(offset=None)]
+        articles = list(nntp.fetch(offset=None))
 
         expected = [
             ('<mailman.350.1458060579.14303.dev-project-link@example.com>', 1,
@@ -155,7 +155,7 @@ class TestNNTPBackend(unittest.TestCase):
             ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2,
              '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)
         ]
-        expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
+        expected_origin = f'{NNTP_SERVER}-{NNTP_GROUP}'
 
         # Although there are 4 messages available on the server,
         # only two are valid
@@ -179,7 +179,7 @@ class TestNNTPBackend(unittest.TestCase):
         mock_nntp.return_value = MockNNTPLib()
 
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
-        articles = [article for article in nntp.fetch(offset=None)]
+        articles = list(nntp.fetch(offset=None))
 
         article = articles[0]
         self.assertEqual(nntp.metadata_id(article['data']), article['search_fields']['item_id'])
@@ -198,11 +198,11 @@ class TestNNTPBackend(unittest.TestCase):
         mock_nntp.return_value = MockNNTPLib()
 
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
-        articles = [article for article in nntp.fetch(offset=2)]
+        articles = list(nntp.fetch(offset=2))
 
         expected = ('<mailman.361.1458076505.14303.dev-project-link@example.com>', 2,
                     '8a20c77405349f442dad8e3ee8e60d392cc75ae7', 1458076496.0)
-        expected_origin = NNTP_SERVER + '-' + NNTP_GROUP
+        expected_origin = f'{NNTP_SERVER}-{NNTP_GROUP}'
 
         self.assertEqual(len(articles), 1)
 
@@ -222,7 +222,7 @@ class TestNNTPBackend(unittest.TestCase):
         mock_nntp.return_value = MockNNTPLib()
 
         nntp = NNTP(NNTP_SERVER, NNTP_GROUP)
-        articles = [article for article in nntp.fetch(offset=3)]
+        articles = list(nntp.fetch(offset=3))
 
         self.assertEqual(len(articles), 0)
 
@@ -232,7 +232,7 @@ class TestNNTPBackend(unittest.TestCase):
         raw_article = read_file('data/nntp/nntp_1.txt')
 
         article = NNTP.parse_article(raw_article)
-        article = {k: v for k, v in article.items()}
+        article = dict(article.items())
 
         self.assertEqual(article['Message-ID'], '<mailman.350.1458060579.14303.dev-project-link@example.com>')
         self.assertEqual(article['NNTP-Posting-Date'], 'Tue, 15 Mar 2016 11:49:40 -0500')

@@ -82,9 +82,7 @@ class HyperKitty(MBox):
 
         :returns: a generator of messages
         """
-        items = super().fetch(category, from_date)
-
-        return items
+        return super().fetch(category, from_date)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
@@ -102,11 +100,7 @@ class HyperKitty(MBox):
         mailing_list = HyperKittyList(self.url, self.dirpath)
         mailing_list.fetch(from_date=from_date)
 
-        messages = self._fetch_and_parse_messages(mailing_list, from_date)
-
-        for message in messages:
-            yield message
-
+        yield from self._fetch_and_parse_messages(mailing_list, from_date)
         logger.info("Fetch process completed")
 
     @classmethod
@@ -201,9 +195,7 @@ class HyperKittyList(MailingList):
                 self.PEND: end.strftime("%Y-%m-%d")
             }
 
-            success = self._download_archive(url, params, filepath)
-
-            if success:
+            if success := self._download_archive(url, params, filepath):
                 fetched.append((url, filepath))
 
         logger.info("%s/%s MBoxes downloaded", len(fetched), tmbox)

@@ -39,19 +39,21 @@ from base import TestCaseBackendArchive
 
 
 GITHUB_API_URL = "https://api.github.com"
-GITHUB_API_GRAPHQL_URL = GITHUB_API_URL + "/graphql"
-GITHUB_RATE_LIMIT = GITHUB_API_URL + "/rate_limit"
-GITHUB_REPO_URL = GITHUB_API_URL + "/repos/zhquan_example/repo"
-GITHUB_ISSUES_URL = GITHUB_REPO_URL + "/issues"
+GITHUB_API_GRAPHQL_URL = f"{GITHUB_API_URL}/graphql"
+GITHUB_RATE_LIMIT = f"{GITHUB_API_URL}/rate_limit"
+GITHUB_REPO_URL = f"{GITHUB_API_URL}/repos/zhquan_example/repo"
+GITHUB_ISSUES_URL = f"{GITHUB_REPO_URL}/issues"
 GITHUB_ENTERPRISE_URL = "https://example.com"
 GITHUB_ENTERPRISE_API_URL = "https://example.com/api/v3"
-GITHUB_ENTERPRISE_API_GRAPHQL_URL = GITHUB_ENTERPRISE_URL + "/api/graphql"
-GITHUB_ENTREPRISE_RATE_LIMIT = GITHUB_ENTERPRISE_API_URL + "/rate_limit"
-GITHUB_ENTREPRISE_REPO_URL = GITHUB_ENTERPRISE_API_URL + "/repos/zhquan_example/repo"
-GITHUB_ENTERPRISE_ISSUES_URL = GITHUB_ENTREPRISE_REPO_URL + "/issues"
-GITHUB_APP_INSTALLATION_URL = GITHUB_API_URL + '/app/installations'
-GITHUB_APP_ACCESS_TOKEN_URL = GITHUB_APP_INSTALLATION_URL + '/1/access_tokens'
-GITHUB_APP_AUTH_URL = GITHUB_API_URL + '/installation/repositories'
+GITHUB_ENTERPRISE_API_GRAPHQL_URL = f"{GITHUB_ENTERPRISE_URL}/api/graphql"
+GITHUB_ENTREPRISE_RATE_LIMIT = f"{GITHUB_ENTERPRISE_API_URL}/rate_limit"
+GITHUB_ENTREPRISE_REPO_URL = (
+    f"{GITHUB_ENTERPRISE_API_URL}/repos/zhquan_example/repo"
+)
+GITHUB_ENTERPRISE_ISSUES_URL = f"{GITHUB_ENTREPRISE_REPO_URL}/issues"
+GITHUB_APP_INSTALLATION_URL = f'{GITHUB_API_URL}/app/installations'
+GITHUB_APP_ACCESS_TOKEN_URL = f'{GITHUB_APP_INSTALLATION_URL}/1/access_tokens'
+GITHUB_APP_AUTH_URL = f'{GITHUB_API_URL}/installation/repositories'
 
 
 def read_file(filename, mode='r'):
@@ -148,7 +150,9 @@ class TestGitHubQLBackend(unittest.TestCase):
                                })
 
         github = GitHubQL("zhquan_example", "repo", ["aaa"])
-        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+        events = list(
+            github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)
+        )
 
         self.assertEqual(len(events), 2)
 
@@ -230,7 +234,9 @@ class TestGitHubQLBackend(unittest.TestCase):
                                body='', status=200)
 
         github = GitHubQL("zhquan_example", "repo", github_app_id='1', github_app_pk_filepath='data/github/private.pem')
-        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+        events = list(
+            github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)
+        )
 
         self.assertEqual(len(events), 2)
 
@@ -305,7 +311,9 @@ class TestGitHubQLBackend(unittest.TestCase):
                                })
 
         github = GitHubQL("zhquan_example", "repo", ["aaa"])
-        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+        events = list(
+            github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)
+        )
 
         self.assertEqual(len(events), 4)
 
@@ -390,7 +398,9 @@ class TestGitHubQLBackend(unittest.TestCase):
 
         github = GitHubQL("zhquan_example", "repo", ["aaa"])
         to_date = datetime.datetime(2020, 4, 7, 13, 23, 00)
-        events = [events for events in github.fetch(from_date=None, to_date=to_date, category=CATEGORY_EVENT)]
+        events = list(
+            github.fetch(from_date=None, to_date=to_date, category=CATEGORY_EVENT)
+        )
 
         self.assertEqual(len(events), 1)
 
@@ -441,7 +451,9 @@ class TestGitHubQLBackend(unittest.TestCase):
                                })
 
         github = GitHubQL("zhquan_example", "repo", ["aaa"])
-        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+        events = list(
+            github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)
+        )
 
         self.assertEqual(len(events), 2)
 
@@ -491,7 +503,9 @@ class TestGitHubQLBackend(unittest.TestCase):
                                })
 
         github = GitHubQL("zhquan_example", "repo", ["aaa"], base_url=GITHUB_ENTERPRISE_URL)
-        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+        events = list(
+            github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)
+        )
 
         self.assertEqual(len(events), 2)
 
@@ -553,7 +567,9 @@ class TestGitHubQLBackend(unittest.TestCase):
                                })
 
         github = GitHubQL("zhquan_example", "repo", ["aaa"])
-        events = [events for events in github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)]
+        events = list(
+            github.fetch(from_date=None, to_date=None, category=CATEGORY_EVENT)
+        )
 
         self.assertEqual(len(events), 1)
 
@@ -707,7 +723,11 @@ class TestGitHubQLClient(unittest.TestCase):
                                })
 
         client = GitHubQLClient("zhquan_example", "repo", ["aaa"], None)
-        events = [event for event in client.events(issue_number=1, is_pull=False, from_date=DEFAULT_DATETIME)]
+        events = list(
+            client.events(
+                issue_number=1, is_pull=False, from_date=DEFAULT_DATETIME
+            )
+        )
         self.assertEqual(len(events[0]), 2)
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
 
@@ -735,7 +755,9 @@ class TestGitHubQLClient(unittest.TestCase):
                                })
 
         client = GitHubQLClient("zhquan_example", "repo", ["aaa"], None)
-        events = [event for event in client.events(issue_number=1, is_pull=True, from_date=DEFAULT_DATETIME)]
+        events = list(
+            client.events(issue_number=1, is_pull=True, from_date=DEFAULT_DATETIME)
+        )
         self.assertEqual(len(events[0]), 3)
         self.assertEqual(events[0][0]['state'], 'CHANGES_REQUESTED')
         self.assertEqual(events[0][1]['state'], 'COMMENTED')
@@ -778,7 +800,11 @@ class TestGitHubQLClient(unittest.TestCase):
                                })
 
         client = GitHubQLClient("zhquan_example", "repo", ["aaa"], None)
-        events = [event for event in client.events(issue_number=1, is_pull=False, from_date=DEFAULT_DATETIME)]
+        events = list(
+            client.events(
+                issue_number=1, is_pull=False, from_date=DEFAULT_DATETIME
+            )
+        )
         self.assertEqual(len(events[0]), 2)
         self.assertEqual(len(events[1]), 2)
         self.assertEqual(httpretty.last_request().headers["Authorization"], "token aaa")
@@ -809,9 +835,11 @@ class TestGitHubQLClient(unittest.TestCase):
         client = GitHubQLClient("zhquan_example", "repo", ["aaa"], None)
 
         with self.assertLogs(logger, level='ERROR') as cm:
-            events = [event for event in client.events(issue_number=1,
-                                                       is_pull=False,
-                                                       from_date=DEFAULT_DATETIME)]
+            events = list(
+                client.events(
+                    issue_number=1, is_pull=False, from_date=DEFAULT_DATETIME
+                )
+            )
             self.assertEqual(cm.output[0], 'ERROR:perceval.backends.core.githubql:Events not collected for issue 1'
                                            ' in zhquan_example/repo due to: Parse error on "=" (EQUALS) at [7, 80]')
             self.assertEqual(events, [])

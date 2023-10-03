@@ -86,9 +86,7 @@ class Pipermail(MBox):
 
         :returns: a generator of messages
         """
-        items = super().fetch(category, from_date)
-
-        return items
+        return super().fetch(category, from_date)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the messages
@@ -106,11 +104,7 @@ class Pipermail(MBox):
         mailing_list = PipermailList(self.url, self.dirpath, self.ssl_verify)
         mailing_list.fetch(from_date=from_date)
 
-        messages = self._fetch_and_parse_messages(mailing_list, from_date)
-
-        for message in messages:
-            yield message
-
+        yield from self._fetch_and_parse_messages(mailing_list, from_date)
         logger.info("Fetch process completed")
 
     @classmethod
@@ -227,9 +221,7 @@ class PipermailList(MailingList):
                 from_date < mbox_dt):
 
                 filepath = os.path.join(self.dirpath, filename)
-                success = self._download_archive(link, filepath)
-
-                if success:
+                if success := self._download_archive(link, filepath):
                     fetched.append((link, filepath))
 
         logger.info("%s/%s MBoxes downloaded", len(fetched), len(links))
@@ -303,11 +295,10 @@ class PipermailList(MailingList):
             r.raise_for_status()
             self._write_archive(r, filepath)
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 403:
-                logger.warning("Ignoring %s archive due to: %s", url, str(e))
-                return False
-            else:
+            if e.response.status_code != 403:
                 raise e
+            logger.warning("Ignoring %s archive due to: %s", url, str(e))
+            return False
         except OSError as e:
             logger.warning("Ignoring %s archive due to: %s", url, str(e))
             return False

@@ -48,7 +48,7 @@ from base import TestCaseBackendArchive
 
 
 MEDIAWIKI_SERVER_URL = 'http://example.com'
-MEDIAWIKI_API = MEDIAWIKI_SERVER_URL + '/api.php'
+MEDIAWIKI_API = f'{MEDIAWIKI_SERVER_URL}/api.php'
 
 TESTED_VERSIONS = ['1.23', '1.28']
 
@@ -200,7 +200,7 @@ class TestMediaWikiBackend(unittest.TestCase):
         mediawiki._test_mode = True
 
         with self.assertRaises(BackendError):
-            _ = [page for page in mediawiki.fetch(from_date=from_date)]
+            _ = list(mediawiki.fetch(from_date=from_date))
 
     @httpretty.activate
     def _test_search_fields(self, version):
@@ -211,7 +211,7 @@ class TestMediaWikiBackend(unittest.TestCase):
         # Test fetch pages with their reviews
         mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
 
-        pages = [page for page in mediawiki.fetch()]
+        pages = list(mediawiki.fetch())
 
         page = pages[0]
         self.assertEqual(mediawiki.metadata_id(page['data']), page['search_fields']['item_id'])
@@ -235,21 +235,18 @@ class TestMediaWikiBackend(unittest.TestCase):
         if from_date:
             # Set flag to ignore MAX_RECENT_DAYS exception
             mediawiki._test_mode = True
-            pages = [page for page in mediawiki.fetch(from_date=from_date, reviews_api=reviews_api)]
+            pages = list(mediawiki.fetch(from_date=from_date, reviews_api=reviews_api))
         else:
-            pages = [page for page in mediawiki.fetch(reviews_api=reviews_api)]
+            pages = list(mediawiki.fetch(reviews_api=reviews_api))
 
-        if version == "1.28" and reviews_api:
+        if (
+            version == "1.28"
+            and reviews_api
+            or version == "1.23"
+            or not reviews_api
+        ):
             # 2 pages in all name spaces
             self.assertEqual(len(pages), 2)
-        elif version == "1.23" or not reviews_api:
-            if not from_date:
-                # 2 pages per each of the 5 name spaces
-                self.assertEqual(len(pages), 2)
-            else:
-                # 1 page in recent changes
-                self.assertEqual(len(pages), 2)
-
         HTTPServer.check_pages_contents(self, pages)
 
 
@@ -289,7 +286,7 @@ class TestMediaWikiBackend_1_23(TestMediaWikiBackend):
         HTTPServer.routes("1.23", empty=True)
 
         mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
-        pages = [page for page in mediawiki.fetch()]
+        pages = list(mediawiki.fetch())
 
         self.assertEqual(len(pages), 0)
 
@@ -336,7 +333,7 @@ class TestMediaWikiBackend_1_28(TestMediaWikiBackend):
         HTTPServer.routes("1.28", empty=True)
 
         mediawiki = MediaWiki(MEDIAWIKI_SERVER_URL)
-        pages = [page for page in mediawiki.fetch()]
+        pages = list(mediawiki.fetch())
 
         self.assertEqual(len(pages), 0)
 

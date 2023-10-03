@@ -267,7 +267,7 @@ class TestMBoxBackend(TestBaseMBox):
         """Test whether it parses a set of mbox files"""
 
         backend = MBox('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=None)]
+        messages = list(backend.fetch(from_date=None))
 
         expected = [
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
@@ -298,7 +298,7 @@ class TestMBoxBackend(TestBaseMBox):
         """Test whether the search_fields is properly set"""
 
         backend = MBox('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=None)]
+        messages = list(backend.fetch(from_date=None))
 
         for message in messages:
             self.assertEqual(backend.metadata_id(message['data']), message['search_fields']['item_id'])
@@ -309,7 +309,7 @@ class TestMBoxBackend(TestBaseMBox):
         from_date = datetime.datetime(2008, 1, 1)
 
         backend = MBox('http://example.com/', self.tmp_path)
-        messages = [m for m in backend.fetch(from_date=from_date)]
+        messages = list(backend.fetch(from_date=from_date))
 
         expected = [
             ('<4CF64D10.9020206@domain.com>', '86315b479b4debe320b59c881c1e375216cbf333', 1291210000.0),
@@ -342,13 +342,13 @@ class TestMBoxBackend(TestBaseMBox):
         backend = MBox('http://example.com/', self.tmp_path)
 
         with self.assertRaises(Exception):
-            _ = [m for m in backend.fetch(from_date=None)]
+            _ = list(backend.fetch(from_date=None))
 
     def test_ignore_messages(self):
         """Test if it ignores some messages without mandatory fields"""
 
         backend = MBox('http://example.com/', self.tmp_error_path)
-        messages = [m for m in backend.fetch()]
+        messages = list(backend.fetch())
 
         # There are only two valid message on the mbox
         self.assertEqual(len(messages), 2)
@@ -408,7 +408,7 @@ class TestMBoxBackend(TestBaseMBox):
             mock_copy_mbox.side_effect = copy_mbox_side_effect
 
             backend = MBox('http://example.com/', tmp_path_ign)
-            messages = [m for m in backend.fetch()]
+            messages = list(backend.fetch())
 
             # Only one message is read
             self.assertEqual(len(messages), 1)
@@ -421,11 +421,11 @@ class TestMBoxBackend(TestBaseMBox):
         """Test whether it parses a mbox file"""
 
         messages = MBox.parse_mbox(self.files['single'])
-        result = [msg for msg in messages]
+        result = list(messages)
 
         self.assertEqual(len(result), 1)
 
-        message = {k: v for k, v in result[0].items()}
+        message = dict(result[0].items())
 
         expected = {
             'From': 'goran at domain.com ( Göran Lastname )',
@@ -446,11 +446,11 @@ class TestMBoxBackend(TestBaseMBox):
         """Test whether it parses a complex mbox file"""
 
         messages = MBox.parse_mbox(self.files['complex'])
-        result = [msg for msg in messages]
+        result = list(messages)
 
         self.assertEqual(len(result), 2)
 
-        m0 = {k: v for k, v in result[0].items()}
+        m0 = dict(result[0].items())
         self.assertEqual(len(m0.keys()), 34)
         self.assertEqual(m0['Message-ID'], '<BAY12-DAV6Dhd2stb2e0000c0ce@hotmail.com>')
         self.assertEqual(m0['Date'], 'Wed, 22 Sep 2004 02:03:40 -0700')
@@ -471,7 +471,7 @@ class TestMBoxBackend(TestBaseMBox):
         }
         self.assertDictEqual(m0['body'], expected_body)
 
-        m1 = {k: v for k, v in result[1].items()}
+        m1 = dict(result[1].items())
         self.assertEqual(len(m1.keys()), 35)
         self.assertEqual(m1['Message-ID'], '<87iqzlofqu.fsf@avet.kvota.net>')
         self.assertEqual(m1['Date'], 'Mon, 17 Mar 2008 10:35:05 +0100')
@@ -488,7 +488,7 @@ class TestMBoxBackend(TestBaseMBox):
         """Test if it parses a message with a multipart body"""
 
         messages = MBox.parse_mbox(self.files['multipart'])
-        result = [msg for msg in messages]
+        result = list(messages)
 
         self.assertEqual(len(result), 2)
 
@@ -531,7 +531,7 @@ class TestMBoxBackend(TestBaseMBox):
         """Check whether it parses a mbox thatn contains encoding errors on its from header"""
 
         messages = MBox.parse_mbox(self.files['unixfrom'])
-        result = [msg for msg in messages]
+        result = list(messages)
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['unixfrom'],
@@ -541,7 +541,7 @@ class TestMBoxBackend(TestBaseMBox):
         """Check whether it parses a mbox that contains an unknown encoding"""
 
         messages = MBox.parse_mbox(self.files['unknown'])
-        result = [msg for msg in messages]
+        result = list(messages)
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['From'],
@@ -551,7 +551,7 @@ class TestMBoxBackend(TestBaseMBox):
         """Check whether no execption is raisen when parsing a mbox that contains a iso 8859 encoding"""
 
         messages = MBox.parse_mbox(self.files['iso8859'])
-        _ = [msg for msg in messages]
+        _ = list(messages)
 
 
 class TestMBoxCommand(unittest.TestCase):

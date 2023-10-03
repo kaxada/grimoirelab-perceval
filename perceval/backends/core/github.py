@@ -167,13 +167,11 @@ class GitHub(Backend):
 
         :returns: a dict of search fields
         """
-        search_fields = {
+        return {
             DEFAULT_SEARCH_FIELD: self.metadata_id(item),
             'owner': self.owner,
-            'repo': self.repository
+            'repo': self.repository,
         }
-
-        return search_fields
 
     def fetch(self, category=CATEGORY_ISSUE, from_date=DEFAULT_DATETIME, to_date=DEFAULT_LAST_DATETIME,
               filter_classified=False):
@@ -206,11 +204,9 @@ class GitHub(Backend):
             'from_date': from_date,
             'to_date': to_date
         }
-        items = super().fetch(category,
-                              filter_classified=filter_classified,
-                              **kwargs)
-
-        return items
+        return super().fetch(
+            category, filter_classified=filter_classified, **kwargs
+        )
 
     def fetch_items(self, category, **kwargs):
         """Fetch the items (issues or pull_requests or repo information)
@@ -224,13 +220,11 @@ class GitHub(Backend):
         to_date = kwargs['to_date']
 
         if category == CATEGORY_ISSUE:
-            items = self.__fetch_issues(from_date, to_date)
+            return self.__fetch_issues(from_date, to_date)
         elif category == CATEGORY_PULL_REQUEST:
-            items = self.__fetch_pull_requests(from_date, to_date)
+            return self.__fetch_pull_requests(from_date, to_date)
         else:
-            items = self.__fetch_repo_info()
-
-        return items
+            return self.__fetch_repo_info()
 
     @classmethod
     def has_archiving(cls):
@@ -252,10 +246,7 @@ class GitHub(Backend):
     def metadata_id(item):
         """Extracts the identifier from a GitHub item."""
 
-        if "forks_count" in item:
-            return str(item['fetched_on'])
-        else:
-            return str(item['id'])
+        return str(item['fetched_on']) if "forks_count" in item else str(item['id'])
 
     @staticmethod
     def metadata_updated_on(item):
@@ -271,11 +262,10 @@ class GitHub(Backend):
         """
         if "forks_count" in item:
             return item['fetched_on']
-        else:
-            ts = item['updated_at']
-            ts = str_to_datetime(ts)
+        ts = item['updated_at']
+        ts = str_to_datetime(ts)
 
-            return ts.timestamp()
+        return ts.timestamp()
 
     @staticmethod
     def metadata_category(item):
@@ -286,13 +276,11 @@ class GitHub(Backend):
         """
 
         if "base" in item:
-            category = CATEGORY_PULL_REQUEST
+            return CATEGORY_PULL_REQUEST
         elif "forks_count" in item:
-            category = CATEGORY_REPO
+            return CATEGORY_REPO
         else:
-            category = CATEGORY_ISSUE
-
-        return category
+            return CATEGORY_ISSUE
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -321,16 +309,17 @@ class GitHub(Backend):
                         continue
 
                     if field == 'user':
-                        issue[field + '_data'] = self.__get_user(issue[field]['login'])
+                        issue[f'{field}_data'] = self.__get_user(issue[field]['login'])
                     elif field == 'assignee':
-                        issue[field + '_data'] = self.__get_issue_assignee(issue[field])
+                        issue[f'{field}_data'] = self.__get_issue_assignee(issue[field])
                     elif field == 'assignees':
-                        issue[field + '_data'] = self.__get_issue_assignees(issue[field])
+                        issue[f'{field}_data'] = self.__get_issue_assignees(issue[field])
                     elif field == 'comments':
-                        issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+                        issue[f'{field}_data'] = self.__get_issue_comments(issue['number'])
                     elif field == 'reactions':
-                        issue[field + '_data'] = \
-                            self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
+                        issue[f'{field}_data'] = self.__get_issue_reactions(
+                            issue['number'], issue['reactions']['total_count']
+                        )
 
                 yield issue
 
@@ -352,16 +341,14 @@ class GitHub(Backend):
                 if not pull[field]:
                     continue
 
-                if field == 'user':
-                    pull[field + '_data'] = self.__get_user(pull[field]['login'])
-                elif field == 'merged_by':
-                    pull[field + '_data'] = self.__get_user(pull[field]['login'])
+                if field in ['user', 'merged_by']:
+                    pull[f'{field}_data'] = self.__get_user(pull[field]['login'])
                 elif field == 'review_comments':
-                    pull[field + '_data'] = self.__get_pull_review_comments(pull['number'])
+                    pull[f'{field}_data'] = self.__get_pull_review_comments(pull['number'])
                 elif field == 'requested_reviewers':
-                    pull[field + '_data'] = self.__get_pull_requested_reviewers(pull['number'])
+                    pull[f'{field}_data'] = self.__get_pull_requested_reviewers(pull['number'])
                 elif field == 'commits':
-                    pull[field + '_data'] = self.__get_pull_commits(pull['number'])
+                    pull[f'{field}_data'] = self.__get_pull_commits(pull['number'])
 
             yield pull
 
@@ -432,18 +419,12 @@ class GitHub(Backend):
     def __get_issue_assignee(self, raw_assignee):
         """Get issue assignee"""
 
-        assignee = self.__get_user(raw_assignee['login'])
-
-        return assignee
+        return self.__get_user(raw_assignee['login'])
 
     def __get_issue_assignees(self, raw_assignees):
         """Get issue assignees"""
 
-        assignees = []
-        for ra in raw_assignees:
-            assignees.append(self.__get_user(ra['login']))
-
-        return assignees
+        return [self.__get_user(ra['login']) for ra in raw_assignees]
 
     def __get_pull_requested_reviewers(self, pr_number):
         """Get pull request requested reviewers"""
@@ -476,10 +457,7 @@ class GitHub(Backend):
 
         for raw_pull_commits in group_pull_commits:
 
-            for commit in json.loads(raw_pull_commits):
-                commit_hash = commit['sha']
-                hashes.append(commit_hash)
-
+            hashes.extend(commit['sha'] for commit in json.loads(raw_pull_commits))
         return hashes
 
     def __get_pull_review_comments(self, pr_number):
@@ -493,15 +471,14 @@ class GitHub(Backend):
             for comment in json.loads(raw_comments):
                 comment_id = comment.get('id')
 
-                user = comment.get('user', None)
-                if not user:
-                    logger.warning("Missing user info for %s", comment['url'])
-                    comment['user_data'] = None
-                else:
+                if user := comment.get('user', None):
                     comment['user_data'] = self.__get_user(user['login'])
 
+                else:
+                    logger.warning("Missing user info for %s", comment['url'])
+                    comment['user_data'] = None
                 comment['reactions_data'] = \
-                    self.__get_pull_review_comment_reactions(comment_id, comment['reactions']['total_count'])
+                        self.__get_pull_review_comment_reactions(comment_id, comment['reactions']['total_count'])
                 comments.append(comment)
 
         return comments
@@ -515,13 +492,12 @@ class GitHub(Backend):
         for raw_reviews in group_reviews:
 
             for review in json.loads(raw_reviews):
-                user = review.get('user', None)
-                if not user:
-                    logger.warning("Missing user info for %s", review['html_url'])
-                    review['user_data'] = None
-                else:
+                if user := review.get('user', None):
                     review['user_data'] = self.__get_user(user['login'])
 
+                else:
+                    logger.warning("Missing user info for %s", review['html_url'])
+                    review['user_data'] = None
                 reviews.append(review)
         return reviews
 
@@ -644,21 +620,14 @@ class GitHubClient(HttpClient, RateLimitHandler):
         self.owner = owner
         self.repository = repository
         self.tokens = tokens
-        if self.tokens:
-            self.n_tokens = len(self.tokens)
-        else:
-            self.n_tokens = 0
+        self.n_tokens = len(self.tokens) if self.tokens else 0
         self.current_token = None
         self.last_rate_limit_checked = None
         self.max_items = max_items
         self.github_app_id = github_app_id
         self.github_app_pk_filepath = github_app_pk_filepath
 
-        if base_url:
-            base_url = urijoin(base_url, 'api', 'v3')
-        else:
-            base_url = GITHUB_API_URL
-
+        base_url = urijoin(base_url, 'api', 'v3') if base_url else GITHUB_API_URL
         super().__init__(base_url, sleep_time=sleep_time, max_retries=max_retries,
                          extra_headers=self._set_extra_headers(),
                          extra_status_forcelist=self.EXTRA_STATUS_FORCELIST,
@@ -675,7 +644,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """
 
         time_to_reset = self.rate_limit_reset_ts - (datetime_utcnow().replace(microsecond=0).timestamp() + 1)
-        time_to_reset = 0 if time_to_reset < 0 else time_to_reset
+        time_to_reset = max(time_to_reset, 0)
 
         return time_to_reset
 
@@ -760,8 +729,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
                 pull_number = issue["number"]
                 path = urijoin(self.base_url, self.RREPOS, self.owner, self.repository, self.RPULLS, pull_number)
                 r = self.fetch(path)
-                pull = r.text
-                yield pull
+                yield r.text
 
     def repo(self):
         """Get repository data"""
@@ -769,9 +737,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         path = urijoin(self.base_url, self.RREPOS, self.owner, self.repository)
 
         r = self.fetch(path)
-        repo = r.text
-
-        return repo
+        return r.text
 
     def pull_requested_reviewers(self, pr_number):
         """Get pull requested reviewers"""
@@ -834,20 +800,18 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         url_user = urijoin(self.base_url, self.RUSERS, login)
 
-        logger.debug("Getting info for %s" % url_user)
+        logger.debug(f"Getting info for {url_user}")
 
         try:
             r = self.fetch(url_user)
             user = r.text
             self._users[login] = user
         except requests.exceptions.HTTPError as error:
-            # When the login is no longer exist or the token has no permission
-            if error.response.status_code == 404:
-                logger.error("Can't get github login: %s", error)
-                user = '{}'
-            else:
+            if error.response.status_code != 404:
                 raise error
 
+            logger.error("Can't get github login: %s", error)
+            user = '{}'
         return user
 
     def user_orgs(self, login):
@@ -860,12 +824,10 @@ class GitHubClient(HttpClient, RateLimitHandler):
             r = self.fetch(url)
             orgs = r.text
         except requests.exceptions.HTTPError as error:
-            # 404 not found is wrongly received sometimes
-            if error.response.status_code == 404:
-                logger.error("Can't get github login orgs: %s", error)
-                orgs = '[]'
-            else:
+            if error.response.status_code != 404:
                 raise error
+            logger.error("Can't get github login orgs: %s", error)
+            orgs = '[]'
         except requests.exceptions.RetryError as error:
             logger.error("Can't get github login orgs: %s", error)
             orgs = '[]'
@@ -891,7 +853,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         if not self.from_archive:
             if self._need_check_tokens() and self.sleep_for_rate and self.github_app_id:
-                logger.debug("GitHub APP with {} ID: access token expired, creating new one".format(self.github_app_id))
+                logger.debug(
+                    f"GitHub APP with {self.github_app_id} ID: access token expired, creating new one"
+                )
                 self._choose_best_api_token()
 
         response = super().fetch(url, payload, headers, method, stream, auth)
@@ -907,16 +871,14 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def fetch_items(self, path, payload):
         """Return the items from github API using links pagination"""
 
-        page = 0  # current page
         last_page = None  # last page
         url_next = urijoin(self.base_url, self.RREPOS, self.owner, self.repository, path)
-        logger.debug("Get GitHub paginated items from " + url_next)
+        logger.debug(f"Get GitHub paginated items from {url_next}")
 
         response = self.fetch(url_next, payload=payload)
 
         items = response.text
-        page += 1
-
+        page = 0 + 1
         if 'last' in response.links:
             last_url = response.links['last']['url']
             last_page = last_url.split('&page=')[1].split('&')[0]
@@ -940,7 +902,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
         """Return token's remaining API points"""
 
         rate_url = urijoin(self.base_url, self.RRATE_LIMIT)
-        self.session.headers.update({self.HAUTHORIZATION: 'token ' + token})
+        self.session.headers.update({self.HAUTHORIZATION: f'token {token}'})
         remaining = 0
         try:
             headers = super().fetch(rate_url).headers
@@ -963,7 +925,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
             remainings[idx] = self._get_token_rate_limit(token)
         # Restore archiving to whatever state it was
         self.archive = arch
-        logger.debug("Remaining API points: {}".format(remainings))
+        logger.debug(f"Remaining API points: {remainings}")
         return remainings
 
     def _choose_best_api_token(self):
@@ -980,11 +942,13 @@ class GitHubClient(HttpClient, RateLimitHandler):
         if self.n_tokens > 1:
             remainings = self._get_tokens_rate_limits()
             token_idx = remainings.index(max(remainings))
-            logger.debug("Remaining API points: {}, choosen index: {}".format(remainings, token_idx))
+            logger.debug(f"Remaining API points: {remainings}, choosen index: {token_idx}")
 
         # If we have any tokens - use best of them
         self.current_token = self.tokens[token_idx]
-        self.session.headers.update({self.HAUTHORIZATION: 'token ' + self.current_token})
+        self.session.headers.update(
+            {self.HAUTHORIZATION: f'token {self.current_token}'}
+        )
         # Update rate limit data for the current token
         self._update_current_rate_limit()
 
@@ -993,12 +957,14 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         jwt_token = self._create_jwt_token()
         headers = {
-            self.HAUTHORIZATION: "Bearer {}".format(jwt_token),
-            self.HACCEPT: self.VACCEPT_V3
+            self.HAUTHORIZATION: f"Bearer {jwt_token}",
+            self.HACCEPT: self.VACCEPT_V3,
         }
         installation_id = self._get_installation_id(headers)
         access_token = self._create_access_token(headers, installation_id)
-        logger.debug("GitHub APP access token created for {} installation ID".format(installation_id))
+        logger.debug(
+            f"GitHub APP access token created for {installation_id} installation ID"
+        )
         self.tokens = [access_token]
         self.n_tokens = 1
 
@@ -1016,8 +982,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
             "iss": self.github_app_id
         }
         private_key = self._read_pem()
-        jwt_token = jwt.encode(payload, private_key, algorithm="RS256")
-        return jwt_token
+        return jwt.encode(payload, private_key, algorithm="RS256")
 
     def _read_pem(self):
         """Read private key PEM file.
@@ -1035,15 +1000,12 @@ class GitHubClient(HttpClient, RateLimitHandler):
 
         :returns: Installation ID
         """
-        installation_id = None
         url = urijoin(self.base_url, GITHUB_APP_INSTALLATION)
         r = self.session.get(url, headers=headers)
         data = r.json()
-        for i in data:
-            if i['account']['login'] == self.owner:
-                installation_id = i['id']
-                break
-        return installation_id
+        return next(
+            (i['id'] for i in data if i['account']['login'] == self.owner), None
+        )
 
     def _create_access_token(self, headers, installation_id):
         """Create GitHub access token given the installation ID.
@@ -1066,8 +1028,8 @@ class GitHubClient(HttpClient, RateLimitHandler):
         :param access_token: GitHub access token
         """
         headers = {
-            self.HAUTHORIZATION: "token {}".format(access_token),
-            self.HACCEPT: self.VACCEPT_V3
+            self.HAUTHORIZATION: f"token {access_token}",
+            self.HACCEPT: self.VACCEPT_V3,
         }
         url = urijoin(self.base_url, GITHUB_APP_INSTALLATION_REPOSITORIES)
         _ = self.session.get(url, headers=headers)
@@ -1120,7 +1082,9 @@ class GitHubClient(HttpClient, RateLimitHandler):
             if error.response.status_code == 404:
                 logger.warning("Rate limit not initialized: %s", error)
             elif error.response.status_code == 401:
-                logger.debug("GitHub APP with {} ID: access token expired, creating new one".format(self.github_app_id))
+                logger.debug(
+                    f"GitHub APP with {self.github_app_id} ID: access token expired, creating new one"
+                )
                 self._update_access_token()
             else:
                 raise error
@@ -1128,9 +1092,7 @@ class GitHubClient(HttpClient, RateLimitHandler):
     def _set_extra_headers(self):
         """Set extra headers for session"""
 
-        headers = {}
-        headers.update({self.HACCEPT: self.VACCEPT})
-        return headers
+        return {self.HACCEPT: self.VACCEPT}
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):

@@ -83,7 +83,7 @@ class Archive:
 
     def __init__(self, archive_path):
         if not os.path.exists(archive_path):
-            raise ArchiveError(cause="archive %s does not exist" % (archive_path))
+            raise ArchiveError(cause=f"archive {archive_path} does not exist")
 
         self.archive_path = archive_path
         self.origin = None
@@ -99,8 +99,7 @@ class Archive:
         self._load_metadata()
 
     def __del__(self):
-        conn = getattr(self, '_db', None)
-        if conn:
+        if conn := getattr(self, '_db', None):
             conn.close()
 
     def init_metadata(self, origin, backend_name, backend_version,
@@ -128,16 +127,18 @@ class Archive:
 
         try:
             cursor = self._db.cursor()
-            insert_stmt = "INSERT INTO " + self.METADATA_TABLE + " "\
-                          "(origin, backend_name, backend_version, " \
-                          "category, backend_params, created_on) " \
-                          "VALUES (?, ?, ?, ?, ?, ?)"
+            insert_stmt = (
+                f"INSERT INTO {self.METADATA_TABLE}" + " "
+                "(origin, backend_name, backend_version, "
+                "category, backend_params, created_on) "
+                "VALUES (?, ?, ?, ?, ?, ?)"
+            )
             cursor.execute(insert_stmt, metadata)
 
             self._db.commit()
             cursor.close()
         except sqlite3.DatabaseError as e:
-            msg = "metadata initialization error; cause: %s" % str(e)
+            msg = f"metadata initialization error; cause: {str(e)}"
             raise ArchiveError(cause=msg)
 
         self.origin = origin
@@ -174,18 +175,20 @@ class Archive:
 
         try:
             cursor = self._db.cursor()
-            insert_stmt = "INSERT INTO " + self.ARCHIVE_TABLE + " (" \
-                          "id, hashcode, uri, payload, headers, data) " \
-                          "VALUES(?,?,?,?,?,?)"
+            insert_stmt = (
+                f"INSERT INTO {self.ARCHIVE_TABLE}" + " ("
+                "id, hashcode, uri, payload, headers, data) "
+                "VALUES(?,?,?,?,?,?)"
+            )
             cursor.execute(insert_stmt, (None, hashcode, uri,
                                          payload_dump, headers_dump, data_dump))
             self._db.commit()
             cursor.close()
         except sqlite3.IntegrityError as e:
-            msg = "data storage error; cause: duplicated entry %s" % hashcode
+            msg = f"data storage error; cause: duplicated entry {hashcode}"
             raise ArchiveError(cause=msg)
         except sqlite3.DatabaseError as e:
-            msg = "data storage error; cause: %s" % str(e)
+            msg = f"data storage error; cause: {str(e)}"
             raise ArchiveError(cause=msg)
 
         logger.debug("%s data archived in %s", hashcode, self.archive_path)
@@ -214,19 +217,19 @@ class Archive:
         try:
             cursor = self._db.cursor()
             select_stmt = "SELECT data " \
-                          "FROM " + self.ARCHIVE_TABLE + " " \
-                          "WHERE hashcode = ?"
+                              "FROM " + self.ARCHIVE_TABLE + " " \
+                              "WHERE hashcode = ?"
             cursor.execute(select_stmt, (hashcode,))
             row = cursor.fetchone()
             cursor.close()
         except sqlite3.DatabaseError as e:
-            msg = "data retrieval error; cause: %s" % str(e)
+            msg = f"data retrieval error; cause: {str(e)}"
             raise ArchiveError(cause=msg)
 
         if row:
             found = pickle.loads(row['data'])
         else:
-            msg = "entry %s not found in archive %s" % (hashcode, self.archive_path)
+            msg = f"entry {hashcode} not found in archive {self.archive_path}"
             raise ArchiveError(cause=msg)
 
         return found
@@ -292,7 +295,7 @@ class Archive:
         nmetadata = self._count_table_rows(self.METADATA_TABLE)
 
         if nmetadata > 1:
-            msg = "archive %s metadata corrupted; multiple metadata entries" % (self.archive_path)
+            msg = f"archive {self.archive_path} metadata corrupted; multiple metadata entries"
             raise ArchiveError(cause=msg)
         if nmetadata == 0 and nentries > 0:
             msg = "archive %s metadata is empty but %s entries were achived" % (self.archive_path)
@@ -331,13 +334,13 @@ class Archive:
         """Fetch the number of rows in a table"""
 
         cursor = self._db.cursor()
-        select_stmt = "SELECT COUNT(*) FROM " + table_name
+        select_stmt = f"SELECT COUNT(*) FROM {table_name}"
 
         try:
             cursor.execute(select_stmt)
             row = cursor.fetchone()
         except sqlite3.DatabaseError as e:
-            msg = "invalid archive file; cause: %s" % str(e)
+            msg = f"invalid archive file; cause: {str(e)}"
             raise ArchiveError(cause=msg)
         finally:
             cursor.close()
@@ -379,7 +382,7 @@ class ArchiveManager:
             new archive
         """
         hashcode = uuid.uuid4().hex
-        archive_dir = os.path.join(self.dirpath, hashcode[0:2])
+        archive_dir = os.path.join(self.dirpath, hashcode[:2])
         archive_name = hashcode[2:] + self.STORAGE_EXT
         archive_path = os.path.join(archive_dir, archive_name)
 
@@ -432,10 +435,8 @@ class ArchiveManager:
         """
         archives = self._search_archives(origin, backend_name,
                                          category, archived_after)
-        archives = [(fp, date) for fp, date in archives]
-        archives = [fp for fp, _ in sorted(archives, key=lambda x: x[1])]
-
-        return archives
+        archives = list(archives)
+        return [fp for fp, _ in sorted(archives, key=lambda x: x[1])]
 
     def _search_archives(self, origin, backend_name, category, archived_after):
         """Search archives using filters."""
@@ -461,5 +462,4 @@ class ArchiveManager:
 
         for root, _, files in os.walk(self.dirpath):
             for filename in files:
-                location = os.path.join(root, filename)
-                yield location
+                yield os.path.join(root, filename)

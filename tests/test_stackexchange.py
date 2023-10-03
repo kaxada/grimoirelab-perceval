@@ -48,7 +48,7 @@ from base import TestCaseBackendArchive
 VERSION_API = '/2.2'
 STACKEXCHANGE_API_URL = 'https://api.stackexchange.com'
 STACKEXCHANGE_VERSION_URL = STACKEXCHANGE_API_URL + VERSION_API
-STACKEXCHANGE_QUESTIONS_URL = STACKEXCHANGE_VERSION_URL + '/questions'
+STACKEXCHANGE_QUESTIONS_URL = f'{STACKEXCHANGE_VERSION_URL}/questions'
 QUESTIONS_FILTER = 'Bf*y*ByQD_upZqozgU6lXL_62USGOoV3)MFNgiHqHpmO_Y-jHR'
 
 
@@ -116,7 +116,7 @@ class TestStackExchangeBackend(unittest.TestCase):
 
         stack = StackExchange(site="stackoverflow", tagged="python",
                               api_token="aaa", max_questions=1)
-        questions = [question for question in stack.fetch(from_date=None)]
+        questions = list(stack.fetch(from_date=None))
 
         self.assertEqual(questions[0]['origin'], 'stackoverflow')
         self.assertEqual(questions[0]['uuid'], '43953bd75d1d4dbedb457059acb4b79fcf6712a8')
@@ -139,7 +139,7 @@ class TestStackExchangeBackend(unittest.TestCase):
 
         stack = StackExchange(site="stackoverflow", tagged="python",
                               api_token="aaa", max_questions=1)
-        questions = [question for question in stack.fetch(from_date=None)]
+        questions = list(stack.fetch(from_date=None))
 
         question = questions[0]
         self.assertEqual(stack.metadata_id(question['data']), question['search_fields']['item_id'])
@@ -158,7 +158,7 @@ class TestStackExchangeBackend(unittest.TestCase):
 
         stack = StackExchange(site="stackoverflow", tagged="python",
                               api_token="aaa", max_questions=1)
-        questions = [question for question in stack.fetch(from_date=None)]
+        questions = list(stack.fetch(from_date=None))
 
         self.assertEqual(len(questions), 0)
 
@@ -175,7 +175,7 @@ class TestStackExchangeBackend(unittest.TestCase):
         from_date = datetime.datetime(2016, 4, 5)
         stack = StackExchange(site="stackoverflow", tagged="python",
                               api_token="aaa", max_questions=1)
-        questions = [question for question in stack.fetch(from_date=from_date)]
+        questions = list(stack.fetch(from_date=from_date))
 
         self.assertEqual(questions[0]['origin'], 'stackoverflow')
         self.assertEqual(questions[0]['uuid'], '43953bd75d1d4dbedb457059acb4b79fcf6712a8')
@@ -252,7 +252,7 @@ class TestStackExchangeBackendParsers(unittest.TestCase):
 
         questions = StackExchange.parse_questions(raw_parse)
 
-        result = [question for question in questions]
+        result = list(questions)
 
         self.assertDictEqual(result[0], parse[0])
         self.assertDictEqual(result[1], parse[1])
@@ -303,7 +303,7 @@ class TestStackExchangeClient(unittest.TestCase):
         }
 
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
-        raw_questions = [questions for questions in client.get_questions(from_date=None)]
+        raw_questions = list(client.get_questions(from_date=None))
 
         self.assertEqual(len(raw_questions), 1)
         self.assertEqual(raw_questions[0], question)
@@ -335,7 +335,7 @@ class TestStackExchangeClient(unittest.TestCase):
         }
 
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
-        raw_questions = [questions for questions in client.get_questions(from_date=None)]
+        raw_questions = list(client.get_questions(from_date=None))
 
         self.assertEqual(len(raw_questions), 1)
         self.assertEqual(raw_questions[0], question)
@@ -365,7 +365,7 @@ class TestStackExchangeClient(unittest.TestCase):
         }
 
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", access_token="bbb", max_questions=1)
-        _ = [questions for questions in client.get_questions(from_date=None)]
+        _ = list(client.get_questions(from_date=None))
         self.assertDictEqual(httpretty.last_request().querystring, payload)
 
     @httpretty.activate
@@ -394,7 +394,7 @@ class TestStackExchangeClient(unittest.TestCase):
         }
 
         client = StackExchangeClient(site="stackoverflow", tagged="python", token="aaa", max_questions=1)
-        raw_questions = [questions for questions in client.get_questions(from_date=from_date)]
+        raw_questions = list(client.get_questions(from_date=from_date))
 
         self.assertEqual(len(raw_questions), 1)
         self.assertEqual(raw_questions[0], question)
@@ -450,7 +450,7 @@ class TestStackExchangeClient(unittest.TestCase):
         client = StackExchangeClient(site="stackoverflow",
                                      tagged="python",
                                      token="aaa", max_questions=1)
-        raw_questions = [questions for questions in client.get_questions(from_date=None)]
+        raw_questions = list(client.get_questions(from_date=None))
 
         self.assertEqual(len(raw_questions), 2)
         self.assertEqual(raw_questions[0], page_1)
@@ -485,7 +485,7 @@ class TestStackExchangeClient(unittest.TestCase):
                                      token="aaa", max_questions=1)
 
         before = time.time()
-        raw_pages = [question for question in client.get_questions(from_date=None)]
+        raw_pages = list(client.get_questions(from_date=None))
         after = time.time()
 
         self.assertEqual(len(raw_pages), 2)

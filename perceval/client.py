@@ -137,12 +137,13 @@ class HttpClient:
 
         :returns a response object
         """
-        if self.from_archive:
-            response = self._fetch_from_archive(url, payload, headers)
-        else:
-            response = self._fetch_from_remote(url, payload, headers, method, stream, auth)
-
-        return response
+        return (
+            self._fetch_from_archive(url, payload, headers)
+            if self.from_archive
+            else self._fetch_from_remote(
+                url, payload, headers, method, stream, auth
+            )
+        )
 
     @staticmethod
     def sanitize_for_archive(url, headers, payload):
@@ -252,8 +253,10 @@ class RateLimitHandler:
         self.rate_limit_reset_header = rate_limit_reset_header
 
         if min_rate_to_sleep > self.MAX_RATE_LIMIT:
-            msg = "Minimum rate to sleep value exceeded (%d)."
-            msg += "High values might cause the client to sleep forever."
+            msg = (
+                "Minimum rate to sleep value exceeded (%d)."
+                + "High values might cause the client to sleep forever."
+            )
             msg += "Reset to %d."
             self.min_rate_to_sleep = self.MAX_RATE_LIMIT
             logger.warning(msg, min_rate_to_sleep, self.MAX_RATE_LIMIT)
@@ -264,19 +267,19 @@ class RateLimitHandler:
         """The fetching process sleeps until the rate limit is restored or
            raises a RateLimitError exception if sleep_for_rate flag is disabled.
         """
-        if self.rate_limit is not None and self.rate_limit <= self.min_rate_to_sleep:
-            seconds_to_reset = self.calculate_time_to_reset()
+        if self.rate_limit is None or self.rate_limit > self.min_rate_to_sleep:
+            return
+        seconds_to_reset = self.calculate_time_to_reset()
 
-            if seconds_to_reset < 0:
-                logger.warning("Value of sleep for rate limit is negative, reset it to 0")
-                seconds_to_reset = 0
+        if seconds_to_reset < 0:
+            logger.warning("Value of sleep for rate limit is negative, reset it to 0")
+            seconds_to_reset = 0
 
-            cause = "Rate limit exhausted."
-            if self.sleep_for_rate:
-                logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
-                time.sleep(seconds_to_reset)
-            else:
-                raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
+        cause = "Rate limit exhausted."
+        if not self.sleep_for_rate:
+            raise RateLimitError(cause=cause, seconds_to_reset=seconds_to_reset)
+        logger.info("%s Waiting %i secs for rate limit reset.", cause, seconds_to_reset)
+        time.sleep(seconds_to_reset)
 
     def calculate_time_to_reset(self):
         """Calculate the seconds to reset the token requests."""

@@ -46,13 +46,13 @@ from base import TestCaseBackendArchive
 
 
 CONFLUENCE_URL = 'http://example.com'
-CONFLUENCE_API_URL = CONFLUENCE_URL + '/rest/api'
-CONFLUENCE_CONTENTS_URL = CONFLUENCE_API_URL + '/content/search'
-CONFLUENCE_HISTORICAL_CONTENT_1 = CONFLUENCE_API_URL + '/content/1'
-CONFLUENCE_HISTORICAL_CONTENT_2 = CONFLUENCE_API_URL + '/content/2'
-CONFLUENCE_HISTORICAL_CONTENT_3 = CONFLUENCE_API_URL + '/content/3'
-CONFLUENCE_HISTORICAL_CONTENT_ATT = CONFLUENCE_API_URL + '/content/att1'
-CONFLUENCE_CONTENTS_SPACE_URL = CONFLUENCE_URL + ''
+CONFLUENCE_API_URL = f'{CONFLUENCE_URL}/rest/api'
+CONFLUENCE_CONTENTS_URL = f'{CONFLUENCE_API_URL}/content/search'
+CONFLUENCE_HISTORICAL_CONTENT_1 = f'{CONFLUENCE_API_URL}/content/1'
+CONFLUENCE_HISTORICAL_CONTENT_2 = f'{CONFLUENCE_API_URL}/content/2'
+CONFLUENCE_HISTORICAL_CONTENT_3 = f'{CONFLUENCE_API_URL}/content/3'
+CONFLUENCE_HISTORICAL_CONTENT_ATT = f'{CONFLUENCE_API_URL}/content/att1'
+CONFLUENCE_CONTENTS_SPACE_URL = f'{CONFLUENCE_URL}'
 
 STATUS_CODE_SUCCESS = 200
 STATUS_CODE_NOT_HANDLED = 503
@@ -197,7 +197,7 @@ class TestConfluenceBackend(unittest.TestCase):
 
         confluence = Confluence(CONFLUENCE_URL, max_contents=2)
 
-        hcs = [hc for hc in confluence.fetch()]
+        hcs = list(confluence.fetch())
 
         expected = [
             ('1', 1, '5b8bf26bfd906214ec82f5a682649e8f6fe87984',
@@ -275,7 +275,7 @@ class TestConfluenceBackend(unittest.TestCase):
 
         confluence = Confluence(CONFLUENCE_URL, spaces=["TEST"])
 
-        hcs = [hc for hc in confluence.fetch()]
+        hcs = list(confluence.fetch())
 
         expected = [
             ('3', 3, '93cd38039f3987594d46508396317734131823c1',
@@ -323,7 +323,7 @@ class TestConfluenceBackend(unittest.TestCase):
 
         confluence = Confluence(CONFLUENCE_URL)
 
-        hcs = [hc for hc in confluence.fetch()]
+        hcs = list(confluence.fetch())
 
         hc = hcs[0]
         self.assertEqual(confluence.metadata_id(hc['data']), hc['search_fields']['item_id'])
@@ -358,7 +358,7 @@ class TestConfluenceBackend(unittest.TestCase):
         from_date = datetime.datetime(2016, 6, 16, 0, 0, 0)
 
         confluence = Confluence(CONFLUENCE_URL)
-        hcs = [hc for hc in confluence.fetch(from_date=from_date)]
+        hcs = list(confluence.fetch(from_date=from_date))
 
         # On this test case the first version of content #1
         # will not be returned becasue this version was
@@ -440,7 +440,7 @@ class TestConfluenceBackend(unittest.TestCase):
         confluence = Confluence(CONFLUENCE_URL)
 
         with self.assertRaises(requests.exceptions.HTTPError):
-            _ = [hc for hc in confluence.fetch(from_date=None)]
+            _ = list(confluence.fetch(from_date=None))
 
     @httpretty.activate
     def test_fetch_removed_content(self):
@@ -454,7 +454,7 @@ class TestConfluenceBackend(unittest.TestCase):
                                status=404, body="Mock 404 error")
 
         confluence = Confluence(CONFLUENCE_URL)
-        hcs = [hc for hc in confluence.fetch(from_date=None)]
+        hcs = list(confluence.fetch(from_date=None))
 
         expected = [
             ('2', 1, 'eccc9b6c961f8753ee37fb8d077be80b9bea0976',
@@ -514,7 +514,7 @@ class TestConfluenceBackend(unittest.TestCase):
         from_date = datetime.datetime(2016, 7, 8, 0, 0, 0)
 
         confluence = Confluence(CONFLUENCE_URL)
-        hcs = [hc for hc in confluence.fetch(from_date=from_date)]
+        hcs = list(confluence.fetch(from_date=from_date))
 
         self.assertEqual(len(hcs), 0)
 
@@ -534,7 +534,7 @@ class TestConfluenceBackend(unittest.TestCase):
         raw_contents = read_file('data/confluence/confluence_contents.json')
 
         contents = Confluence.parse_contents_summary(raw_contents)
-        results = [content for content in contents]
+        results = list(contents)
 
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0]['id'], '1')
@@ -544,7 +544,7 @@ class TestConfluenceBackend(unittest.TestCase):
         raw_contents = read_file('data/confluence/confluence_contents_empty.json')
 
         contents = Confluence.parse_contents_summary(raw_contents)
-        results = [content for content in contents]
+        results = list(contents)
 
         self.assertEqual(len(results), 0)
 
@@ -680,7 +680,7 @@ class TestConfluenceClient(unittest.TestCase):
         dt = datetime.datetime(2016, 7, 8, 0, 0, 0)
 
         pages = client.contents(from_date=dt, offset=10, max_contents=2)
-        pages = [p for p in pages]
+        pages = list(pages)
 
         self.assertEqual(len(pages), 1)
 
@@ -703,7 +703,7 @@ class TestConfluenceClient(unittest.TestCase):
         client = ConfluenceClient(CONFLUENCE_URL)
 
         pages = client.contents(max_contents=2)
-        pages = [p for p in pages]
+        pages = list(pages)
 
         self.assertEqual(len(pages), 2)
 

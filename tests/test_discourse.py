@@ -44,12 +44,12 @@ from perceval.errors import BackendError, HttpClientError
 from base import TestCaseBackendArchive
 
 DISCOURSE_SERVER_URL = 'http://example.com'
-DISCOURSE_TOPICS_URL = DISCOURSE_SERVER_URL + '/latest.json'
-DISCOURSE_TOPIC_URL_1148 = DISCOURSE_SERVER_URL + '/t/1148.json'
-DISCOURSE_TOPIC_URL_1149 = DISCOURSE_SERVER_URL + '/t/1149.json'
-DISCOURSE_TOPIC_URL_1150 = DISCOURSE_SERVER_URL + '/t/1150.json'
-DISCOURSE_POST_URL_1 = DISCOURSE_SERVER_URL + '/posts/21.json'
-DISCOURSE_POST_URL_2 = DISCOURSE_SERVER_URL + '/posts/22.json'
+DISCOURSE_TOPICS_URL = f'{DISCOURSE_SERVER_URL}/latest.json'
+DISCOURSE_TOPIC_URL_1148 = f'{DISCOURSE_SERVER_URL}/t/1148.json'
+DISCOURSE_TOPIC_URL_1149 = f'{DISCOURSE_SERVER_URL}/t/1149.json'
+DISCOURSE_TOPIC_URL_1150 = f'{DISCOURSE_SERVER_URL}/t/1150.json'
+DISCOURSE_POST_URL_1 = f'{DISCOURSE_SERVER_URL}/posts/21.json'
+DISCOURSE_POST_URL_2 = f'{DISCOURSE_SERVER_URL}/posts/22.json'
 
 
 def read_file(filename, mode='r'):
@@ -139,7 +139,7 @@ class TestDiscourseBackend(unittest.TestCase):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
             elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                    uri.startswith(DISCOURSE_POST_URL_2):
+                        uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise Exception
@@ -177,7 +177,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # Test fetch topics
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
-        topics = [topic for topic in discourse.fetch()]
+        topics = list(discourse.fetch())
 
         self.assertEqual(len(topics), 2)
 
@@ -239,7 +239,7 @@ class TestDiscourseBackend(unittest.TestCase):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
             elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                    uri.startswith(DISCOURSE_POST_URL_2):
+                        uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise Exception
@@ -277,7 +277,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # Test fetch topics
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0, api_username='user', api_token='12345')
-        topics = [topic for topic in discourse.fetch()]
+        topics = list(discourse.fetch())
 
         self.assertEqual(len(topics), 2)
 
@@ -337,7 +337,7 @@ class TestDiscourseBackend(unittest.TestCase):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
             elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                    uri.startswith(DISCOURSE_POST_URL_2):
+                        uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise Exception
@@ -373,7 +373,7 @@ class TestDiscourseBackend(unittest.TestCase):
 
         # Test fetch topics
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
-        topics = [topic for topic in discourse.fetch()]
+        topics = list(discourse.fetch())
 
         topic = topics[0]
         self.assertEqual(discourse.metadata_id(topic['data']), topic['search_fields']['item_id'])
@@ -405,7 +405,7 @@ class TestDiscourseBackend(unittest.TestCase):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1149):
                 body = body_topic_1149
             elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                    uri.startswith(DISCOURSE_POST_URL_2):
+                        uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise Exception
@@ -445,7 +445,7 @@ class TestDiscourseBackend(unittest.TestCase):
         from_date = datetime.datetime(2016, 5, 25, 2, 0, 0)
 
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
-        topics = [topic for topic in discourse.fetch(from_date=from_date)]
+        topics = list(discourse.fetch(from_date=from_date))
 
         self.assertEqual(len(topics), 1)
 
@@ -480,7 +480,7 @@ class TestDiscourseBackend(unittest.TestCase):
                                body=body, status=200)
 
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
-        topics = [topic for topic in discourse.fetch()]
+        topics = list(discourse.fetch())
 
         self.assertEqual(len(topics), 0)
 
@@ -505,7 +505,7 @@ class TestDiscourseBackend(unittest.TestCase):
             elif uri.startswith(DISCOURSE_TOPIC_URL_1150):
                 body = body_topic_1150
             elif uri.startswith(DISCOURSE_POST_URL_1) or \
-                    uri.startswith(DISCOURSE_POST_URL_2):
+                        uri.startswith(DISCOURSE_POST_URL_2):
                 body = body_post
             else:
                 raise Exception
@@ -548,7 +548,7 @@ class TestDiscourseBackend(unittest.TestCase):
         from_date = datetime.datetime(2016, 5, 25, 2, 0, 0)
 
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
-        topics = [topic for topic in discourse.fetch(from_date=from_date)]
+        topics = list(discourse.fetch(from_date=from_date))
 
         self.assertEqual(len(topics), 2)
 
@@ -600,7 +600,7 @@ class TestDiscourseBackend(unittest.TestCase):
         # On this tests two topics will be retrieved.
         # One of them has last_posted_at with null
         discourse = Discourse(DISCOURSE_SERVER_URL, sleep_time=0)
-        topics = [topic for topic in discourse.fetch(from_date=None)]
+        topics = list(discourse.fetch(from_date=None))
 
         self.assertEqual(len(topics), 1)
 

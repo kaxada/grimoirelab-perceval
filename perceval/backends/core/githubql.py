@@ -346,9 +346,7 @@ class GitHubQL(GitHub):
             'from_date': from_date,
             'to_date': to_date
         }
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the items
@@ -361,9 +359,7 @@ class GitHubQL(GitHub):
         from_date = kwargs['from_date']
         to_date = kwargs['to_date']
 
-        items = self.__fetch_events(from_date, to_date)
-
-        return items
+        return self.__fetch_events(from_date, to_date)
 
     @classmethod
     def has_resuming(cls):
@@ -493,7 +489,7 @@ class GitHubQLClient(GitHubClient):
             query_merged_event = QUERY_MERGED_EVENT
             query_pull_request_reviews_event = QUERY_PULL_REQUEST_REVIEWS_EVENT
 
-        event_types = '[{}]'.format(','.join(aux_event_types))
+        event_types = f"[{','.join(aux_event_types)}]"
 
         query = QUERY_TEMPLATE % (self.owner, self.repository, node_type, issue_number,
                                   self.VPER_PAGE, "null", event_types, from_date.isoformat(),
@@ -505,21 +501,29 @@ class GitHubQLClient(GitHubClient):
 
             items = response.json()
             if 'errors' in items:
-                logger.error("Events not collected for issue %s in %s/%s due to: %s" %
-                             (issue_number, self.owner, self.repository, items['errors'][0]['message']))
+                logger.error(
+                    f"Events not collected for issue {issue_number} in {self.owner}/{self.repository} due to: {items['errors'][0]['message']}"
+                )
                 return []
 
             timelines = items['data']['repository'][node_type]['timelineItems']
-            nodes = timelines['nodes']
-            yield nodes
-
+            yield timelines['nodes']
             page = timelines['pageInfo']
             has_next = page['hasNextPage']
             next_cursor = page['endCursor']
 
-            query = QUERY_TEMPLATE % (self.owner, self.repository, node_type, issue_number, self.VPER_PAGE,
-                                      '"{}"'.format(next_cursor), event_types, from_date.isoformat(),
-                                      query_merged_event, query_pull_request_reviews_event)
+            query = QUERY_TEMPLATE % (
+                self.owner,
+                self.repository,
+                node_type,
+                issue_number,
+                self.VPER_PAGE,
+                f'"{next_cursor}"',
+                event_types,
+                from_date.isoformat(),
+                query_merged_event,
+                query_pull_request_reviews_event,
+            )
 
 
 class GitHubQLCommand(GitHubCommand):

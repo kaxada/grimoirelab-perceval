@@ -97,12 +97,10 @@ class Confluence(Backend):
 
         ancestors_ids = []
 
-        ancestors = item.get('ancestors', None)
-        if ancestors:
-            for ancestor in ancestors:
-                if 'id' in ancestor:
-                    ancestors_ids.append(ancestor['id'])
-
+        if ancestors := item.get('ancestors', None):
+            ancestors_ids.extend(
+                ancestor['id'] for ancestor in ancestors if 'id' in ancestor
+            )
         search_fields[SEARCH_ANCESTOR_IDS] = ancestors_ids
         search_fields[SEARCH_CONTENT_ID] = item['id']
         search_fields[SEARCH_CONTENT_VERSION_NUMBER] = item['version']['number']
@@ -140,9 +138,7 @@ class Confluence(Backend):
             'max_contents': max_contents
         }
 
-        items = super().fetch(category, **kwargs)
-
-        return items
+        return super().fetch(category, **kwargs)
 
     def fetch_items(self, category, **kwargs):
         """Fetch the contents
@@ -162,7 +158,7 @@ class Confluence(Backend):
         nhcs = 0
 
         contents = self.__fetch_contents_summary(from_date, max_contents)
-        contents = [content for content in contents]
+        contents = list(contents)
 
         for content in contents:
             cid = content['id']
@@ -210,7 +206,7 @@ class Confluence(Backend):
         cid = item['id']
         cversion = item['version']['number']
 
-        return str(cid) + '#v' + str(cversion)
+        return f'{str(cid)}#v{str(cversion)}'
 
     @staticmethod
     def metadata_updated_on(item):
@@ -250,9 +246,7 @@ class Confluence(Backend):
         """
         summary = json.loads(raw_json)
 
-        contents = summary['results']
-        for c in contents:
-            yield c
+        yield from summary['results']
 
     @staticmethod
     def parse_historical_content(raw_json):
@@ -265,8 +259,7 @@ class Confluence(Backend):
 
         :returns: a dict with historical content
         """
-        hc = json.loads(raw_json)
-        return hc
+        return json.loads(raw_json)
 
     def _init_client(self, from_archive=False):
         """Init client"""
@@ -278,8 +271,7 @@ class Confluence(Backend):
     def __fetch_contents_summary(self, from_date, max_contents):
         logger.debug("Fetching contents summary from %s", str(from_date))
         for page in self.client.contents(from_date=from_date, max_contents=max_contents):
-            for cs in self.parse_contents_summary(page):
-                yield cs
+            yield from self.parse_contents_summary(page)
 
     def __fetch_historical_contents(self, cid, from_date):
         logger.debug("Fetching historical contents of %s content", cid)
@@ -413,7 +405,7 @@ class ConfluenceClient(HttpClient):
         :param offset: fetch the contents starting from this offset
         :param max_contents: maximum number of contents to fetch per request
         """
-        resource = self.RCONTENTS + '/' + self.MSEARCH
+        resource = f'{self.RCONTENTS}/{self.MSEARCH}'
 
         # Set confluence query parameter (cql)
         date = from_date.strftime("%Y-%m-%d %H:%M")
@@ -433,8 +425,7 @@ class ConfluenceClient(HttpClient):
         if offset:
             params[self.PSTART] = offset
 
-        for response in self._call(resource, params):
-            yield response
+        yield from self._call(resource, params)
 
     def historical_content(self, content_id, version):
         """Get the snapshot of a content for the given version.
@@ -442,7 +433,7 @@ class ConfluenceClient(HttpClient):
         :param content_id: fetch the snapshot of this content
         :param version: snapshot version of the content
         """
-        resource = self.RCONTENTS + '/' + str(content_id)
+        resource = f'{self.RCONTENTS}/{str(content_id)}'
 
         params = {
             self.PVERSION: version,
@@ -451,7 +442,7 @@ class ConfluenceClient(HttpClient):
         }
 
         # Only one item is returned
-        response = [response for response in self._call(resource, params)]
+        response = list(self._call(resource, params))
         return response[0]
 
     def _call(self, resource, params):

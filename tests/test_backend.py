@@ -105,12 +105,12 @@ class MockedBackend(Backend):
         for x in range(MockedBackend.ITEMS):
             if self._fetch_from_archive:
                 item = self.archive.retrieve(str(x), None, None)
-                yield item
             else:
                 item = {'item': x, 'category': category}
                 if self.archive:
                     self.archive.store(str(x), None, None, item)
-                yield item
+
+            yield item
 
     def _init_client(self, from_archive=False):
         self._fetch_from_archive = from_archive
@@ -197,15 +197,13 @@ class ClassifiedFieldsBackend(MockedBackend):
         return super().fetch(category, filter_classified=filter_classified)
 
     def fetch_items(self, category, **kwargs):
-        i = 0
-        for item in super().fetch_items(category, **kwargs):
+        for i, item in enumerate(super().fetch_items(category, **kwargs)):
             item['my'] = {
                 'classified': {'field': i},
                 'field': i,
                 'list_classified': [{'field': i, 'dict_classified': {'field': i}}]
             }
             item['classified'] = i
-            i += 1
             yield item
 
 
@@ -599,7 +597,7 @@ class TestBackend(unittest.TestCase):
 
         b = MockedBackend('test')
 
-        _ = [item for item in b.fetch()]
+        _ = list(b.fetch())
 
         self.assertEqual(b.summary.fetched, 5)
         self.assertIsNone(b.summary.extras)
@@ -620,7 +618,7 @@ class TestBackend(unittest.TestCase):
         archive = Archive.create(archive_path)
         b = MockedBackend('test', archive=archive)
 
-        _ = [item for item in b.fetch()]
+        _ = list(b.fetch())
 
         self.assertEqual(b.archive.backend_name, b.__class__.__name__)
         self.assertEqual(b.archive.backend_version, b.version)
@@ -633,7 +631,7 @@ class TestBackend(unittest.TestCase):
         b = MockedBackend('test')
 
         with self.assertRaises(BackendError):
-            _ = [item for item in b.fetch(category="acme")]
+            _ = list(b.fetch(category="acme"))
 
     def test_fetch_client_not_provided(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -642,7 +640,7 @@ class TestBackend(unittest.TestCase):
         b.CATEGORIES = [MockedBackend.DEFAULT_CATEGORY]
 
         with self.assertRaises(NotImplementedError):
-            _ = [item for item in b.fetch(category=MockedBackend.DEFAULT_CATEGORY)]
+            _ = list(b.fetch(category=MockedBackend.DEFAULT_CATEGORY))
 
     def test_init_client_not_implemented(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -675,8 +673,12 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
 
         backend = ClassifiedFieldsBackend('http://example.com/', tag='test')
 
-        items = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
-                                                filter_classified=True)]
+        items = list(
+            backend.fetch(
+                category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                filter_classified=True,
+            )
+        )
 
         for x in range(5):
             item = items[x]
@@ -707,8 +709,12 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
 
         backend = ClassifiedFieldsBackend('http://example.com/', tag='test')
 
-        items = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
-                                                filter_classified=False)]
+        items = list(
+            backend.fetch(
+                category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                filter_classified=False,
+            )
+        )
 
         for x in range(5):
             item = items[x]
@@ -739,8 +745,12 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
         backend = ClassifiedFieldsBackend('http://example.com/', tag='test')
         backend.CLASSIFIED_FIELDS = []
 
-        items = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
-                                                filter_classified=True)]
+        items = list(
+            backend.fetch(
+                category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                filter_classified=True,
+            )
+        )
 
         for x in range(5):
             item = items[x]
@@ -775,8 +785,12 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
         msg_error = "classified fields filtering is not compatible with archiving items"
 
         with self.assertRaisesRegex(BackendError, msg_error):
-            _ = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
-                                                filter_classified=True)]
+            _ = list(
+                backend.fetch(
+                    category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                    filter_classified=True,
+                )
+            )
 
     def test_not_found_field(self):
         """Check if items are fetched when a classified field does not exist"""
@@ -784,9 +798,17 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
         backend = NotFoundClassifiedFieldBackend('http://example.com/', tag='test')
 
         with self.assertLogs(backend_logger, level='DEBUG') as cm:
-            items = [item for item in backend.fetch(category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
-                                                    filter_classified=True)]
+            items = list(
+                backend.fetch(
+                    category=ClassifiedFieldsBackend.DEFAULT_CATEGORY,
+                    filter_classified=True,
+                )
+            )
 
+            # Check logger output
+            # Each classified-field-related message appears after 7 debug messages
+            # because there are other debug messages
+            _num_debug_msgs = 7
             for x in range(5):
                 item = items[x]
 
@@ -797,12 +819,8 @@ class TestClassifiedFieldsFiltering(unittest.TestCase):
                 }
                 self.assertDictEqual(item['data'], expected)
 
-                # Check logger output
-                # Each classified-field-related message appears after 7 debug messages
-                # because there are other debug messages
-                _num_debug_msgs = 7
                 expected_uuid = uuid('http://example.com/', str(x))
-                exp = "Classified field 'classified_field' not found for item " + expected_uuid
+                exp = f"Classified field 'classified_field' not found for item {expected_uuid}"
                 self.assertRegex(cm.output[x * _num_debug_msgs + 1], exp)
 
 
@@ -818,13 +836,13 @@ class TestBackendBlacklist(unittest.TestCase):
         """Check whether blacklist items are filtered out"""
 
         backend = MockedBackendBlacklist('http://example.com/')
-        items = [item for item in backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY)]
+        items = list(backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY))
         self.assertEqual(len(items), 5)
 
         backend = MockedBackendBlacklist('http://example.com/', blacklist_ids=[1])
 
         with self.assertLogs(backend_logger, level='INFO') as cm:
-            items = [item for item in backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY)]
+            items = list(backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY))
             self.assertEqual(cm.output[0], 'WARNING:perceval.backend:Skipping blacklisted item item 1')
 
         self.assertEqual(len(items), 4)
@@ -834,11 +852,15 @@ class TestBackendBlacklist(unittest.TestCase):
         """Check whether no items are blacklisted if the ORIGIN_UNIQUE_FIELD is not defined"""
 
         backend = MockedBackendBlacklist('http://example.com/')
-        items = [item for item in backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY)]
+        items = list(backend.fetch(category=MockedBackendBlacklist.DEFAULT_CATEGORY))
         self.assertEqual(len(items), 5)
 
         backend = MockedBackendBlacklistNoOriginUniqueField('http://example.com/', blacklist_ids=[1])
-        items = [item for item in backend.fetch(category=MockedBackendBlacklistNoOriginUniqueField.DEFAULT_CATEGORY)]
+        items = list(
+            backend.fetch(
+                category=MockedBackendBlacklistNoOriginUniqueField.DEFAULT_CATEGORY
+            )
+        )
         self.assertEqual(len(items), 5)
 
 
@@ -864,7 +886,7 @@ class TestBackendArchive(TestCaseBackendArchive):
         b = MockedBackend('test')
 
         with self.assertRaises(ArchiveError):
-            _ = [item for item in b.fetch_from_archive()]
+            _ = list(b.fetch_from_archive())
 
     def test_fetch_client_not_implemented(self):
         """Test whether an NotImplementedError exception is thrown"""
@@ -872,7 +894,7 @@ class TestBackendArchive(TestCaseBackendArchive):
         b = Backend('test', archive=self.archive)
 
         with self.assertRaises(NotImplementedError):
-            _ = [item for item in b.fetch_from_archive()]
+            _ = list(b.fetch_from_archive())
 
 
 class TestBackendCommandArgumentParser(unittest.TestCase):
@@ -1129,13 +1151,12 @@ def convert_cmd_output_to_json(filepath):
     with open(filepath) as fout:
         buff = None
 
-        for line in fout.readlines():
+        for line in fout:
             if line.startswith('{\n'):
                 buff = line
             elif line.startswith('}\n'):
                 buff += line
-                obj = json.loads(buff)
-                yield obj
+                yield json.loads(buff)
             else:
                 buff += line
 
@@ -1267,7 +1288,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
 
         self.assertEqual(len(items), 5)
 
@@ -1295,7 +1316,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
 
         self.assertEqual(len(items), 5)
 
@@ -1323,7 +1344,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
 
         self.assertEqual(len(items), 5)
 
@@ -1351,7 +1372,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
 
         self.assertEqual(len(items), 5)
 
@@ -1364,7 +1385,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
         self.assertEqual(len(items), 5)
 
         for x in range(5):
@@ -1393,7 +1414,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
 
         self.assertEqual(len(items), 5)
 
@@ -1419,7 +1440,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
 
         self.assertEqual(len(items), 5)
 
@@ -1476,7 +1497,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
 
         self.assertEqual(len(items), 5)
 
@@ -1518,7 +1539,7 @@ class TestBackendCommand(unittest.TestCase):
             cmd.run()
             cmd.outfile.close()
 
-            items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+            items = list(convert_cmd_output_to_json(self.fout_path))
 
             self.assertEqual(len(items), 5)
 
@@ -1537,7 +1558,7 @@ class TestBackendCommand(unittest.TestCase):
         cmd.run()
         cmd.outfile.close()
 
-        items = [item for item in convert_cmd_output_to_json(self.fout_path)]
+        items = list(convert_cmd_output_to_json(self.fout_path))
 
         self.assertEqual(len(items), 2)
 
@@ -1584,7 +1605,7 @@ class TestBackendItemsGenerator(unittest.TestCase):
 
         with BackendItemsGenerator(CommandBackend, args, category, manager=None) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            items = [item for item in big.items]
+            items = list(big.items)
 
             self.assertEqual(big.backend.origin, args['origin'])
             self.assertEqual(big.backend.tag, args['tag'])
@@ -1615,23 +1636,23 @@ class TestBackendItemsGenerator(unittest.TestCase):
 
         with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            items = [item for item in big.items]
+            items = list(big.items)
             self.assertEqual(big.backend.origin, args['origin'])
             self.assertEqual(big.backend.tag, args['tag'])
             self.assertEqual(len(items), 5)
 
         with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            items = [item for item in big.items]
+            items = list(big.items)
             self.assertEqual(big.backend.origin, args['origin'])
             self.assertEqual(big.backend.tag, args['tag'])
             self.assertEqual(len(items), 5)
 
         with BackendItemsGenerator(CommandBackend, args, category,
-                                   manager=manager, fetch_archive=True,
-                                   archived_after=str_to_datetime('1970-01-01')) as big:
+                                       manager=manager, fetch_archive=True,
+                                       archived_after=str_to_datetime('1970-01-01')) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            items = [item for item in big.items]
+            items = list(big.items)
 
         self.assertEqual(len(items), 10)
 
@@ -1662,7 +1683,7 @@ class TestBackendItemsGenerator(unittest.TestCase):
 
         with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            items = [item for item in big.items]
+            items = list(big.items)
             self.assertEqual(big.backend.origin, args['origin'])
             self.assertEqual(big.backend.tag, args['tag'])
             self.assertEqual(len(items), 5)
@@ -1671,27 +1692,27 @@ class TestBackendItemsGenerator(unittest.TestCase):
 
         with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            items = [item for item in big.items]
+            items = list(big.items)
             self.assertEqual(big.backend.origin, args['origin'])
             self.assertEqual(big.backend.tag, args['tag'])
             self.assertEqual(len(items), 5)
 
         # Fetch items from the archive
         with BackendItemsGenerator(CommandBackend, args, category,
-                                   manager=manager, fetch_archive=True,
-                                   archived_after=str_to_datetime('1970-01-01')) as big:
+                                       manager=manager, fetch_archive=True,
+                                       archived_after=str_to_datetime('1970-01-01')) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            items = [item for item in big.items]
+            items = list(big.items)
             self.assertEqual(big.backend.origin, args['origin'])
             self.assertEqual(big.backend.tag, args['tag'])
             self.assertEqual(len(items), 10)
 
         # Fetch items archived after the given date
         with BackendItemsGenerator(CommandBackend, args, category,
-                                   manager=manager, fetch_archive=True,
-                                   archived_after=archived_dt) as big:
+                                       manager=manager, fetch_archive=True,
+                                       archived_after=archived_dt) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            items = [item for item in big.items]
+            items = list(big.items)
             self.assertEqual(len(items), 5)
 
     def test_init_items_filter_classified_fields(self):
@@ -1706,8 +1727,8 @@ class TestBackendItemsGenerator(unittest.TestCase):
         }
 
         with BackendItemsGenerator(ClassifiedFieldsBackend, args, category,
-                                   filter_classified=True, manager=None) as big:
-            items = [item for item in big.items]
+                                       filter_classified=True, manager=None) as big:
+            items = list(big.items)
 
         self.assertEqual(len(items), 5)
 
@@ -1749,7 +1770,7 @@ class TestBackendItemsGenerator(unittest.TestCase):
 
         with self.assertRaises(BackendError):
             big = BackendItemsGenerator(ErrorCommandBackend, args, category, manager=manager)
-            _ = [item for item in big.items]
+            _ = list(big.items)
 
         filepaths = manager.search('http://example.com/', 'ErrorCommandBackend',
                                    'mock_item', str_to_datetime('1970-01-01'))
@@ -1770,15 +1791,15 @@ class TestBackendItemsGenerator(unittest.TestCase):
         }
 
         with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
-            items = [item for item in big.items]
+            items = list(big.items)
 
         self.assertEqual(len(items), 5)
 
         # There aren't items for this category
         with BackendItemsGenerator(CommandBackend, args, 'alt_item',
-                                   manager=manager, fetch_archive=True,
-                                   archived_after=str_to_datetime('1970-01-01')) as big:
-            items = [item for item in big.items]
+                                       manager=manager, fetch_archive=True,
+                                       archived_after=str_to_datetime('1970-01-01')) as big:
+            items = list(big.items)
             self.assertEqual(len(items), 0)
 
     def test_init_ignore_corrupted_archive(self):
@@ -1787,7 +1808,7 @@ class TestBackendItemsGenerator(unittest.TestCase):
         def delete_rows(db, table_name):
             conn = sqlite3.connect(db)
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM " + table_name)
+            cursor.execute(f"DELETE FROM {table_name}")
             cursor.close()
             conn.commit()
 
@@ -1804,11 +1825,11 @@ class TestBackendItemsGenerator(unittest.TestCase):
         # First, fetch the items twice to check if several archive
         # are used
         with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
-            items = [item for item in big.items]
+            items = list(big.items)
             self.assertEqual(len(items), 5)
 
         with BackendItemsGenerator(CommandBackend, args, category, manager=manager) as big:
-            items = [item for item in big.items]
+            items = list(big.items)
             self.assertEqual(len(items), 5)
 
         # Find archive names to delete the rows of one of them to make it
@@ -1822,9 +1843,9 @@ class TestBackendItemsGenerator(unittest.TestCase):
 
         # Fetch items from the archive
         with BackendItemsGenerator(CommandBackend, args, category,
-                                   manager=manager, fetch_archive=True,
-                                   archived_after=str_to_datetime('1970-01-01')) as big:
-            items = [item for item in big.items]
+                                       manager=manager, fetch_archive=True,
+                                       archived_after=str_to_datetime('1970-01-01')) as big:
+            items = list(big.items)
             self.assertEqual(len(items), 5)
 
         for x in range(5):
@@ -1851,7 +1872,7 @@ class TestBackendItemsGenerator(unittest.TestCase):
 
         with BackendItemsGenerator(CommandBackend, args, category, manager=None) as big:
             self.assertIsInstance(big, BackendItemsGenerator)
-            _ = [item for item in big.items]
+            _ = list(big.items)
 
             summary = big.summary
             self.assertEqual(summary.fetched, 5)
@@ -2013,7 +2034,7 @@ class TestMetadata(unittest.TestCase):
     def test_metadata(self):
         backend = MockedBackend('test', 'mytag')
         before = datetime_utcnow().timestamp()
-        items = [item for item in backend.fetch()]
+        items = list(backend.fetch())
         after = datetime_utcnow().timestamp()
 
         for x in range(5):
@@ -2040,7 +2061,7 @@ class TestMetadata(unittest.TestCase):
     def test_metadata_classified_fields(self):
         backend = MockedBackend('test', 'mytag')
         before = datetime_utcnow().timestamp()
-        items = [item for item in backend.fetch(filter_classified=True)]
+        items = list(backend.fetch(filter_classified=True))
         after = datetime_utcnow().timestamp()
 
         for x in range(5):
@@ -2120,7 +2141,7 @@ class TestFetch(unittest.TestCase):
         }
 
         items = fetch(CommandBackend, args, category, manager=None)
-        items = [item for item in items]
+        items = list(items)
 
         self.assertEqual(len(items), 5)
 
@@ -2148,7 +2169,7 @@ class TestFetch(unittest.TestCase):
         }
 
         items = fetch(CommandBackend, args, category, manager=manager)
-        items = [item for item in items]
+        items = list(items)
 
         self.assertEqual(len(items), 5)
 
@@ -2183,7 +2204,7 @@ class TestFetch(unittest.TestCase):
 
         items = fetch(ClassifiedFieldsBackend, args, category,
                       filter_classified=True, manager=None)
-        items = [item for item in items]
+        items = list(items)
 
         self.assertEqual(len(items), 5)
 
@@ -2226,7 +2247,7 @@ class TestFetch(unittest.TestCase):
         items = fetch(ErrorCommandBackend, args, category, manager=manager)
 
         with self.assertRaises(BackendError):
-            _ = [item for item in items]
+            _ = list(items)
 
         filepaths = manager.search('http://example.com/', 'ErrorCommandBackend',
                                    'mock_item', str_to_datetime('1970-01-01'))
@@ -2259,17 +2280,17 @@ class TestFetchFromArchive(unittest.TestCase):
         # First, fetch the items twice to check if several archive
         # are used
         items = fetch(CommandBackend, args, category, manager=manager)
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 5)
 
         items = fetch(CommandBackend, args, category, manager=manager)
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 5)
 
         # Fetch items from the archive
         items = fetch_from_archive(CommandBackend, args, manager,
                                    category, str_to_datetime('1970-01-01'))
-        items = [item for item in items]
+        items = list(items)
 
         self.assertEqual(len(items), 10)
 
@@ -2299,25 +2320,25 @@ class TestFetchFromArchive(unittest.TestCase):
         }
 
         items = fetch(CommandBackend, args, category, manager=manager)
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 5)
 
         archived_dt = datetime_utcnow()
 
         items = fetch(CommandBackend, args, category, manager=manager)
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 5)
 
         # Fetch items from the archive
         items = fetch_from_archive(CommandBackend, args, manager,
                                    category, str_to_datetime('1970-01-01'))
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 10)
 
         # Fetch items archived after the given date
         items = fetch_from_archive(CommandBackend, args, manager,
                                    category, archived_dt)
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 5)
 
     def test_no_archived_items(self):
@@ -2334,13 +2355,13 @@ class TestFetchFromArchive(unittest.TestCase):
         }
 
         items = fetch(CommandBackend, args, category, manager=manager)
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 5)
 
         # There aren't items for this category
         items = fetch_from_archive(CommandBackend, args, manager,
                                    'alt_item', str_to_datetime('1970-01-01'))
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 0)
 
     def test_ignore_corrupted_archive(self):
@@ -2349,7 +2370,7 @@ class TestFetchFromArchive(unittest.TestCase):
         def delete_rows(db, table_name):
             conn = sqlite3.connect(db)
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM " + table_name)
+            cursor.execute(f"DELETE FROM {table_name}")
             cursor.close()
             conn.commit()
 
@@ -2366,11 +2387,11 @@ class TestFetchFromArchive(unittest.TestCase):
         # First, fetch the items twice to check if several archive
         # are used
         items = fetch(CommandBackend, args, category, manager=manager)
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 5)
 
         items = fetch(CommandBackend, args, category, manager=manager)
-        items = [item for item in items]
+        items = list(items)
         self.assertEqual(len(items), 5)
 
         # Find archive names to delete the rows of one of them to make it
@@ -2385,7 +2406,7 @@ class TestFetchFromArchive(unittest.TestCase):
         # Fetch items from the archive
         items = fetch_from_archive(CommandBackend, args, manager,
                                    category, str_to_datetime('1970-01-01'))
-        items = [item for item in items]
+        items = list(items)
 
         self.assertEqual(len(items), 5)
 
